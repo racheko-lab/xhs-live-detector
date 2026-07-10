@@ -262,22 +262,49 @@ async function getPublicKey(token) {
   return resp.json();
 }
 
-// 用 Web Crypto API 加密 secret (libsodium 在浏览器没有,用 NaCl 的纯JS实现太重)
-// 改用 GitHub 也支持的简单方案:其实 GitHub Secrets API 要求 libsodium 加密。
-// 这里用一个轻量实现:通过 CDN 加载 libsodium-wrappers
-async function encryptSecret(publicKey, keyId, secret) {
-  // 动态加载 libsodium
-  if (!window.sodium) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/sodium-wrappers.min.js";
-      s.onload = resolve;
-      s.onerror = () => reject(new Error("加密库加载失败,请检查网络"));
-      document.head.appendChild(s);
-    });
-    await window.sodium.ready;
+// 加载 libsodium:优先用本地内置文件(同源,最稳),CDN 作为兜底
+const SODIUM_SOURCES = [
+  "libsodium.js",  // 仓库内置,与 index.html 同源,无网络依赖
+  "https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js",
+  "https://fastly.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js",
+  "https://unpkg.com/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js",
+];
+
+function loadScript(src, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    const timer = setTimeout(() => {
+      s.onload = s.onerror = null;
+      reject(new Error("加载超时"));
+    }, timeoutMs);
+    s.onload = () => { clearTimeout(timer); resolve(); };
+    s.onerror = () => { clearTimeout(timer); reject(new Error("加载失败")); };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadSodium() {
+  if (window.sodium) return window.sodium;
+  const errors = [];
+  for (const url of SODIUM_SOURCES) {
+    try {
+      await loadScript(url);
+      if (window.sodium) {
+        await window.sodium.ready;
+        return window.sodium;
+      }
+    } catch (e) {
+      const label = url.startsWith("http") ? url.split('/')[2] : "本地";
+      errors.push(`${label}: ${e.message}`);
+    }
   }
-  const sodium = window.sodium;
+  throw new Error("加密库加载失败。请刷新页面重试,或切换网络。<br>详情:" + errors.join("; "));
+}
+
+async function encryptSecret(publicKey, keyId, secret) {
+  const sodium = await loadSodium();
   const binKey = sodium.from_base64(publicKey.key, sodium.base64_variants.ORIGINAL);
   const binSec = sodium.from_string(secret);
   const enc = sodium.crypto_box_seal(binSec, binKey);
