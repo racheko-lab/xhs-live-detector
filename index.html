@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小红书开播检测 - 配置面板</title>
+  <style>
+    :root {
+      --red: #ff2442;
+      --red-dark: #e01e3a;
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --text-2: #666;
+      --border: #e5e5e7;
+      --green: #34c759;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 560px; margin: 0 auto; }
+    .header {
+      text-align: center;
+      padding: 20px 0 16px;
+    }
+    .logo {
+      display: inline-block;
+      width: 56px; height: 56px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 16px;
+      line-height: 56px;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .subtitle { color: var(--text-2); font-size: 13px; margin: 0; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .num {
+      width: 22px; height: 22px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      text-align: center;
+      line-height: 22px;
+      font-weight: bold;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .hint { font-size: 11px; color: var(--text-2); margin-top: 4px; word-break: break-all; }
+    input, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fafafa;
+      transition: border-color .2s, background .2s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--red);
+      background: #fff;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-primary:disabled { opacity: 0.5; }
+    .btn-secondary {
+      background: #f0f0f2;
+      color: var(--text);
+      margin-top: 8px;
+    }
+    .btn-green { background: var(--green); color: #fff; }
+    .status {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+      word-break: break-all;
+    }
+    .status.show { display: block; }
+    .status.ok { background: #e8f9ed; color: #1d8a3d; }
+    .status.err { background: #fde8ea; color: #b3261e; }
+    .status.info { background: #e8f0fe; color: #1859b9; }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .secret-list { font-size: 13px; color: var(--text-2); margin-top: 8px; }
+    .secret-list .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #e8f9ed;
+      color: #1d8a3d;
+      border-radius: 6px;
+      margin: 2px 4px 2px 0;
+      font-size: 12px;
+    }
+    .footer {
+      text-align: center;
+      color: var(--text-2);
+      font-size: 11px;
+      padding: 16px 0 8px;
+    }
+    .warn {
+      background: #fff8e1;
+      color: #8a6d00;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">小</div>
+      <h1>小红书开播检测</h1>
+      <p class="subtitle">配置面板 · 填好后一键保存到 GitHub Secrets</p>
+    </div>
+
+    <div class="warn">
+      ⚠️ Token 只在你浏览器里用一次,不会上传到任何服务器。用完建议去 GitHub 撤销 token。
+    </div>
+
+    <!-- 步骤1:填 GitHub Token -->
+    <div class="card">
+      <h2 class="card-title"><span class="num">1</span>填入 GitHub Token</h2>
+      <div class="field">
+        <label>Personal Access Token</label>
+        <input type="password" id="token" placeholder="ghp_xxxxxx 或 github_pat_xxxxxx" autocomplete="off" />
+        <div class="hint">需要 repo 权限(经典 token 勾选 repo 即可)。获取:github.com/settings/tokens</div>
+      </div>
+      <button class="btn btn-secondary" id="btnCheck">查看已配置的 Secrets</button>
+      <div class="status info" id="statusCheck"></div>
+      <div class="secret-list" id="secretList"></div>
+    </div>
+
+    <!-- 步骤2:填配置 -->
+    <div class="card">
+      <h2 class="card-title"><span class="num">2</span>填写监控配置</h2>
+
+      <div class="field">
+        <label>小红书用户主页链接</label>
+        <input type="url" id="xhs_user_url" placeholder="https://www.xiaohongshu.com/user/profile/用户ID" />
+        <div class="hint">打开小红书网页版,进入要监控的用户主页,复制地址栏链接</div>
+      </div>
+
+      <div class="field">
+        <label>Bark Key</label>
+        <input type="text" id="bark_key" placeholder="打开 Bark App 首页顶部那串字符" autocomplete="off" />
+        <div class="hint">Bark App 首页顶部显示的字符串,如 XXXXXXXXXX</div>
+      </div>
+
+      <div class="field">
+        <label>Bark 服务器</label>
+        <input type="text" id="bark_server" value="https://api.day.app" placeholder="https://api.day.app" />
+        <div class="hint">用官方服务器就填 https://api.day.app,自建的填自建地址</div>
+      </div>
+
+      <div class="field">
+        <label>小红书 Cookie(可选,建议填)</label>
+        <textarea id="xhs_cookie" placeholder="浏览器登录小红书后,F12 → Network → 任意请求 → 复制 Cookie 整行"></textarea>
+        <div class="hint">不填可能检测不到直播状态。整行粘贴即可。</div>
+      </div>
+
+      <button class="btn btn-primary" id="btnSave" style="margin-top:4px;">保存配置到 GitHub Secrets</button>
+      <div class="status" id="statusSave"></div>
+    </div>
+
+    <!-- 步骤3:测试 -->
+    <div class="card">
+      <h2 class="card-title"><span class="num">3</span>立即测试一次</h2>
+      <p class="hint" style="margin: 0 0 12px;">保存配置后,点下面按钮手动触发一次检测,看手机 Bark 是否收到推送(当前没开播则不会推送,可去 Actions 看日志)。</p>
+      <button class="btn btn-green" id="btnRun">触发检测 workflow</button>
+      <div class="status" id="statusRun"></div>
+    </div>
+
+    <div class="footer">
+      配置仅保存在 GitHub Secrets(加密),不会出现在公开代码里。<br/>
+      Actions 每 10 分钟自动检测一次 · 检测到开播即推送 Bark
+    </div>
+  </div>
+
+<script>
+const REPO_OWNER = "racheko-lab";
+const REPO_NAME = "xhs-live-detector";
+const API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+
+const $ = id => document.getElementById(id);
+const showStatus = (el, type, msg) => {
+  el.className = "status show " + type;
+  el.innerHTML = msg;
+};
+const setLoading = (btn, loading, text) => {
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span>${text || "处理中..."}` : btn.dataset.text || text || btn.innerText;
+};
+
+function headers(token, extra={}) {
+  return Object.assign({
+    "Authorization": `token ${token}`,
+    "Accept": "application/vnd.github+json",
+  }, extra);
+}
+
+// 获取公钥(写 Secrets 必需)
+async function getPublicKey(token) {
+  const resp = await fetch(`${API}/actions/secrets/public-key`, { headers: headers(token) });
+  if (!resp.ok) throw new Error(`获取公钥失败 HTTP ${resp.status}`);
+  return resp.json();
+}
+
+// 用 Web Crypto API 加密 secret (libsodium 在浏览器没有,用 NaCl 的纯JS实现太重)
+// 改用 GitHub 也支持的简单方案:其实 GitHub Secrets API 要求 libsodium 加密。
+// 这里用一个轻量实现:通过 CDN 加载 libsodium-wrappers
+async function encryptSecret(publicKey, keyId, secret) {
+  // 动态加载 libsodium
+  if (!window.sodium) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/sodium-wrappers.min.js";
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("加密库加载失败,请检查网络"));
+      document.head.appendChild(s);
+    });
+    await window.sodium.ready;
+  }
+  const sodium = window.sodium;
+  const binKey = sodium.from_base64(publicKey.key, sodium.base64_variants.ORIGINAL);
+  const binSec = sodium.from_string(secret);
+  const enc = sodium.crypto_box_seal(binSec, binKey);
+  return sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
+}
+
+async function putSecret(token, name, value) {
+  const pub = await getPublicKey(token);
+  const enc = await encryptSecret(pub, pub.key_id, value);
+  const resp = await fetch(`${API}/actions/secrets/${name}`, {
+    method: "PUT",
+    headers: headers(token, {"Content-Type": "application/json"}),
+    body: JSON.stringify({ encrypted_value: enc, key_id: pub.key_id }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(()=>({}));
+    throw new Error(`写入 ${name} 失败 HTTP ${resp.status}: ${err.message||""}`);
+  }
+}
+
+// 查看已配置的 Secrets(只能看名字,看不到值)
+async function listSecrets(token) {
+  const resp = await fetch(`${API}/actions/secrets`, { headers: headers(token) });
+  if (!resp.ok) throw new Error(`查看 Secrets 失败 HTTP ${resp.status}`);
+  const data = await resp.json();
+  return data.secrets.map(s => s.name);
+}
+
+// 触发 workflow
+async function triggerWorkflow(token) {
+  // 先找 workflow id
+  const resp = await fetch(`${API}/actions/workflows`, { headers: headers(token) });
+  if (!resp.ok) throw new Error(`获取 workflows 失败 HTTP ${resp.status}`);
+  const data = await resp.json();
+  const wf = data.workflows.find(w => w.name.includes("小红书") || w.name.toLowerCase().includes("detect"));
+  if (!wf) throw new Error("未找到检测 workflow");
+  const r = await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
+    method: "POST",
+    headers: headers(token, {"Content-Type": "application/json"}),
+    body: JSON.stringify({ ref: wf.path.includes(".yml") ? "main" : "main" }),
+  });
+  if (!r.ok && r.status !== 204) {
+    const e = await r.json().catch(()=>({}));
+    throw new Error(`触发失败 HTTP ${r.status}: ${e.message||""}`);
+  }
+}
+
+// 事件绑定
+$("btnCheck").addEventListener("click", async () => {
+  const token = $("token").value.trim();
+  if (!token) { showStatus($("statusCheck"), "err", "请先填入 Token"); return; }
+  const btn = $("btnCheck");
+  setLoading(btn, true);
+  try {
+    const names = await listSecrets(token);
+    showStatus($("statusCheck"), "ok", `✓ 连接成功。当前已配置 ${names.length} 个 Secret`);
+    $("secretList").innerHTML = names.length
+      ? "已配置: " + names.map(n=>`<span class="tag">${n}</span>`).join("")
+      : "还未配置任何 Secret";
+  } catch(e) {
+    showStatus($("statusCheck"), "err", "✗ " + e.message);
+    $("secretList").innerHTML = "";
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
+$("btnSave").addEventListener("click", async () => {
+  const token = $("token").value.trim();
+  if (!token) { showStatus($("statusSave"), "err", "请先填入 Token"); return; }
+  const cfg = {
+    XHS_USER_URL: $("xhs_user_url").value.trim(),
+    BARK_KEY: $("bark_key").value.trim(),
+    BARK_SERVER: $("bark_server").value.trim() || "https://api.day.app",
+    XHS_COOKIE: $("xhs_cookie").value.trim(),
+  };
+  if (!cfg.XHS_USER_URL || !cfg.BARK_KEY) {
+    showStatus($("statusSave"), "err", "请至少填写 主页链接 和 Bark Key");
+    return;
+  }
+  const btn = $("btnSave");
+  btn.dataset.text = "保存配置到 GitHub Secrets";
+  setLoading(btn, true);
+  const results = [];
+  try {
+    for (const [name, value] of Object.entries(cfg)) {
+      if (!value) { results.push(`✓ ${name}: 跳过(空值)`); continue; }
+      await putSecret(token, name, value);
+      results.push(`✓ ${name}: 已保存`);
+      showStatus($("statusSave"), "info", results.join("<br>"));
+    }
+    showStatus($("statusSave"), "ok", "🎉 全部配置已保存到 GitHub Secrets<br>" + results.join("<br>"));
+  } catch(e) {
+    results.push(`✗ ${e.message}`);
+    showStatus($("statusSave"), "err", results.join("<br>"));
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
+$("btnRun").addEventListener("click", async () => {
+  const token = $("token").value.trim();
+  if (!token) { showStatus($("statusRun"), "err", "请先填入 Token"); return; }
+  const btn = $("btnRun");
+  btn.dataset.text = "触发检测 workflow";
+  setLoading(btn, true);
+  try {
+    await triggerWorkflow(token);
+    showStatus($("statusRun"), "ok", "✓ 已触发!约 1-2 分钟后去 Actions 看运行结果,或看手机 Bark 是否收到推送");
+  } catch(e) {
+    showStatus($("statusRun"), "err", "✗ " + e.message);
+  } finally {
+    setLoading(btn, false);
+  }
+});
+</script>
+</body>
+</html>
