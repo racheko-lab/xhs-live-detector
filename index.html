@@ -32,129 +32,152 @@ body {
 .nav {
   background: linear-gradient(135deg, var(--red), #FF6B7A);
   color: white;
-  padding: 48px 20px 28px;
+  padding: 44px 20px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
-.nav h1 {
-  font-size: 22px;
-  font-weight: 600;
+.nav-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.nav h1 { font-size: 20px; font-weight: 600; }
+.refresh-btn {
+  background: rgba(255,255,255,0.25);
+  border: none;
+  color: white;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
-.nav p {
-  font-size: 13px;
-  opacity: 0.9;
-  margin-top: 4px;
-}
+.refresh-btn:active { background: rgba(255,255,255,0.35); }
+.refresh-btn.loading { pointer-events: none; opacity: 0.7; }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.nav p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
 .container {
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 14px;
 }
 .page { display: none; }
 .page.active { display: block; }
 .card {
   background: var(--card);
   border-radius: var(--radius);
-  padding: 18px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
 .card-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+.card-title .small { font-size: 12px; font-weight: normal; color: var(--text-2); }
 .status-card {
-  background: linear-gradient(135deg, #E8FFEA 0%, #D7F5DC 100%);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-.status-card.running {
-  background: linear-gradient(135deg, #E8F3FF 0%, #D4E8FF 100%);
-}
+.status-card.running { background: linear-gradient(135deg, #E8F3FF 0%, #D4E8FF 100%); }
+.status-card.live { background: linear-gradient(135deg, #FFECE8 0%, #FFD8D0 100%); }
 .status-icon {
-  width: 44px; height: 44px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
 }
-.status-card .status-icon { background: var(--green); color: white; }
-.status-card.running .status-icon { background: var(--blue); }
-.status-text h3 { font-size: 15px; margin-bottom: 2px; }
-.status-text h3.ok { color: #008020; }
-.status-text h3.run { color: var(--blue); }
-.status-text p { font-size: 12px; opacity: 0.8; }
+.status-card.running .status-icon { background: var(--blue); color: white; }
+.status-card.live .status-icon { background: var(--red); color: white; }
+.status-text h3 { font-size: 14px; margin-bottom: 2px; }
+.status-text p { font-size: 11px; opacity: 0.8; }
 .anchor-row {
   display: flex;
   align-items: center;
-  padding: 14px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 .anchor-row:last-child { border-bottom: none; padding-bottom: 0; }
 .anchor-row:first-child { padding-top: 0; }
 .avatar {
-  width: 44px; height: 44px;
+  width: 42px; height: 42px;
   background: var(--red-light);
   color: var(--red);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600;
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-right: 11px;
+}
+.avatar.live {
+  background: var(--red);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(255,36,66,0.15);
 }
 .anchor-info { flex: 1; min-width: 0; }
 .anchor-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.anchor-url {
-  font-size: 12px;
+.anchor-meta {
+  font-size: 11px;
   color: var(--text-2);
+  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
 }
 .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 }
-.badge-live { background: #FFECE8; color: var(--red); }
+.badge-live { background: var(--red); color: white; animation: pulse 1.5s infinite; }
 .badge-off { background: #F2F3F5; color: var(--text-2); }
+.badge-check { background: #E8F3FF; color: var(--blue); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.dot-live {
+  width: 8px; height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
 .info-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
+  align-items: center;
+  padding: 9px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 13px;
 }
 .info-item:last-child { border-bottom: none; padding-bottom: 0; }
 .info-item:first-child { padding-top: 0; }
 .info-item .label { color: var(--text-2); }
-.info-item .value { font-weight: 500; max-width: 60%; text-align: right; word-break: break-all; }
+.info-item .value { font-weight: 500; font-size: 13px; }
 .btn {
   width: 100%;
-  padding: 12px;
+  padding: 11px;
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -169,20 +192,12 @@ body {
   text-decoration: none;
 }
 .btn:active { transform: scale(0.98); }
-.btn-primary {
-  background: var(--red);
-  color: white;
-}
-.btn-secondary {
-  background: #F2F3F5;
-  color: var(--text);
-}
-.btn + .btn { margin-top: 8px; }
+.btn-primary { background: var(--red); color: white; }
+.btn-secondary { background: #F2F3F5; color: var(--text); }
+.btn + .btn { margin-top: 7px; }
 .tabs {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   height: var(--tab-h);
   background: white;
   border-top: 1px solid var(--border);
@@ -192,39 +207,37 @@ body {
 }
 .tab {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
   gap: 2px;
   color: var(--text-2);
   font-size: 11px;
   cursor: pointer;
-  padding-top: 6px;
+  padding-top: 5px;
 }
 .tab.active { color: var(--red); }
-.tab-icon { font-size: 22px; line-height: 1; }
-.input-group { margin-bottom: 14px; }
+.tab-icon { font-size: 20px; line-height: 1; }
+.input-group { margin-bottom: 12px; }
 .input-group:last-child { margin-bottom: 0; }
 .input-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   display: block;
 }
 .input-hint {
   font-size: 11px;
   color: var(--text-2);
-  margin-top: 5px;
+  margin-top: 4px;
   line-height: 1.4;
 }
 input, textarea {
   width: 100%;
-  padding: 11px 13px;
+  padding: 10px 12px;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 9px;
+  font-size: 13px;
   font-family: inherit;
   background: #FAFAFA;
   transition: all 0.2s;
@@ -235,262 +248,331 @@ input:focus, textarea:focus {
   border-color: var(--red);
   background: white;
 }
-textarea { min-height: 70px; resize: vertical; }
+textarea { min-height: 60px; resize: vertical; }
 .anchor-edit {
   background: #FAFBFC;
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
   position: relative;
 }
 .anchor-edit .del-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 28px;
-  height: 28px;
+  top: 8px; right: 8px;
+  width: 26px; height: 26px;
   background: #FFF1F0;
   color: var(--red);
   border: none;
   border-radius: 50%;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
 }
-.anchor-edit .input-group { margin-bottom: 10px; }
+.anchor-edit .input-group { margin-bottom: 8px; }
 .btn-add {
   background: var(--red-light);
   color: var(--red);
   border: 1.5px dashed var(--red);
   font-weight: 500;
+  font-size: 13px;
+  padding: 10px;
 }
 .status-msg {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 13px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 9px;
+  font-size: 12px;
   display: none;
 }
 .status-msg.show { display: block; }
 .status-msg.success { background: #E8FFEA; color: #008020; }
 .status-msg.error { background: #FFECE8; color: #CB2634; }
 .status-msg.loading { background: #E8F3FF; color: var(--blue); }
-.spinner {
-  display: inline-block;
-  width: 14px; height: 14px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  vertical-align: -2px;
-  margin-right: 6px;
+.notice {
+  background: #FFFBE6;
+  border: 1px solid #FFE58F;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: #8A6D00;
+  line-height: 1.5;
+  margin-bottom: 10px;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.footer-note {
+.empty-hint {
   text-align: center;
   color: var(--text-3);
-  font-size: 11px;
-  margin-top: 16px;
+  font-size: 12px;
+  padding: 20px;
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+.section-title {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  font-weight: 500;
 }
 </style>
 </head>
 <body>
 <div class="nav">
-  <h1>📺 小红书开播监控</h1>
-  <p>主播开播自动推送 Bark 通知</p>
+  <div class="nav-top">
+    <h1>📺 小红书开播监控</h1>
+    <button class="refresh-btn" id="btnRefresh" onclick="refreshStatus()">
+      <span id="refreshIcon">🔄</span>
+      <span id="refreshText">刷新</span>
+    </button>
+  </div>
+  <p id="lastCheck">正在加载状态...</p>
 </div>
 
 <div class="container">
   <!-- 状态页 -->
   <div class="page active" id="page-status">
-    <div class="status-card running">
-      <div class="status-icon">⏱️</div>
-      <div class="status-text">
-        <h3 class="run">监控运行中</h3>
-        <p>每 10 分钟自动检测一次</p>
-      </div>
-    </div>
-
+    <div id="statusHeader"></div>
     <div class="card">
       <div class="card-title">
-        <span>👤 监控主播</span>
-        <span class="badge badge-off" id="anchorCount">1 位</span>
+        <span>👤 主播状态</span>
+        <span class="small" id="anchorCount"></span>
       </div>
       <div id="anchorListStatus">
-        <div class="anchor-row">
-          <div class="avatar">郑</div>
-          <div class="anchor-info">
-            <div class="anchor-name">
-              郑知恩
-              <span class="badge badge-off">监控中</span>
-            </div>
-            <div class="anchor-url">小红书主页</div>
-          </div>
-        </div>
+        <div class="empty-hint">加载中...</div>
       </div>
     </div>
-
     <div class="card">
-      <div class="card-title">ℹ️ 信息</div>
+      <div class="card-title">ℹ️ 运行信息</div>
       <div class="info-item">
-        <span class="label">Bark 推送</span>
-        <span class="value" style="color: var(--green);">✓ 已配置</span>
+        <span class="label">检测频率</span>
+        <span class="value">每 10 分钟</span>
       </div>
       <div class="info-item">
-        <span class="label">检测间隔</span>
-        <span class="value">10 分钟</span>
+        <span class="label">推送方式</span>
+        <span class="value" style="color:var(--green)">✓ Bark</span>
       </div>
       <div class="info-item">
         <span class="label">仓库</span>
         <span class="value">racheko-lab/xhs-live-detector</span>
       </div>
     </div>
-
-    <a href="https://github.com/racheko-lab/xhs-live-detector/actions" target="_blank" class="btn btn-secondary" style="margin-bottom: 8px;">
-      📋 查看运行日志
+    <a href="https://github.com/racheko-lab/xhs-live-detector/actions" target="_blank" class="btn btn-secondary">
+      📋 查看 GitHub 运行日志
     </a>
-    <div class="footer-note">
-      配置已自动运行，开播/下播会即时推送 Bark
-    </div>
   </div>
 
-  <!-- 配置页 -->
+  <!-- 设置页 -->
   <div class="page" id="page-config">
-    <div id="configIntro" style="margin-bottom: 12px;">
-      <div class="card" style="background: #FFFBE6; border: 1px solid #FFE58F;">
-        <div style="font-size: 13px; color: #8A6D00; line-height: 1.6;">
-          💡 默认配置已生效，不需要修改。<br/>
-          只有需要<b>添加新主播</b>或<b>修改推送配置</b>时才需要 Token 连接 GitHub。
-        </div>
+    <div class="notice">
+      💡 <b>默认配置已生效，不需要修改！</b><br/>
+      下方可以直接添加/删除主播，保存时再填 Token 即可。
+    </div>
+
+    <div class="card">
+      <div class="card-title">👤 监控主播</div>
+      <div id="anchorListEdit"></div>
+      <button class="btn btn-add" onclick="addAnchor()">+ 添加主播</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔔 Bark 配置</div>
+      <div class="input-group">
+        <label class="input-label">Bark Key</label>
+        <input type="text" id="barkKey" placeholder="Bark App 首页顶部的字符串" autocomplete="off" />
       </div>
-      <div class="card">
-        <div class="card-title">🔑 GitHub Token</div>
-        <div class="input-group">
-          <input type="password" id="ghToken" placeholder="ghp_xxxxxx，需要 repo 权限" autocomplete="off" />
-          <div class="input-hint">
-            仅在需要修改配置时填写，Token 仅在本地浏览器使用
-          </div>
-        </div>
-        <button class="btn btn-secondary" id="btnConnect">连接 GitHub</button>
-        <div class="status-msg" id="statusConnect"></div>
+      <div class="input-group">
+        <label class="input-label">Bark 服务器</label>
+        <input type="text" id="barkServer" value="https://api.day.app" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">小红书 Cookie（选填）</label>
+        <textarea id="xhsCookie" placeholder="登录小红书网页版后 F12 复制 Cookie，提高检测准确率"></textarea>
       </div>
     </div>
 
-    <div id="configForm" style="display:none;">
-      <div class="card">
-        <div class="card-title">👥 主播列表</div>
-        <div id="anchorListEdit"></div>
-        <button class="btn btn-add" id="btnAddAnchor">+ 添加主播</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🔔 Bark 配置</div>
-        <div class="input-group">
-          <label class="input-label">Bark Key</label>
-          <input type="text" id="barkKey" placeholder="Bark App 首页顶部字符串" autocomplete="off" />
-        </div>
-        <div class="input-group">
-          <label class="input-label">Bark 服务器</label>
-          <input type="text" id="barkServer" value="https://api.day.app" />
-        </div>
-        <div class="input-group">
-          <label class="input-label">小红书 Cookie（选填）</label>
-          <textarea id="xhsCookie" placeholder="登录小红书后 F12 复制 Cookie"></textarea>
+    <div class="card">
+      <div class="card-title">🔑 GitHub Token</div>
+      <div class="input-group">
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxx，需要 repo 权限，仅保存时需要" autocomplete="off" />
+        <div class="input-hint">
+          创建：github.com/settings/tokens/new → 勾选 repo 权限<br/>
+          Token 仅在本地浏览器加密使用，不会存储
         </div>
       </div>
-
-      <button class="btn btn-primary" id="btnSave">💾 保存配置</button>
-      <div class="status-msg" id="statusSave"></div>
-
-      <div class="card" style="margin-top: 12px;">
-        <div class="card-title">🧪 测试</div>
-        <button class="btn btn-secondary" id="btnTest">▶️ 立即触发一次检测</button>
-        <div class="status-msg" id="statusTest"></div>
-      </div>
+      <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置到 GitHub</button>
+      <button class="btn btn-secondary" onclick="triggerTest()" style="margin-top:7px">▶️ 立即触发一次检测</button>
+      <div class="status-msg" id="statusMsg"></div>
     </div>
   </div>
 </div>
 
 <!-- 底部Tab栏 -->
 <div class="tabs">
-  <div class="tab active" data-page="page-status">
+  <div class="tab active" data-page="page-status" onclick="switchTab(this)">
     <div class="tab-icon">📊</div>
     <div>状态</div>
   </div>
-  <div class="tab" data-page="page-config">
+  <div class="tab" data-page="page-config" onclick="switchTab(this)">
     <div class="tab-icon">⚙️</div>
     <div>设置</div>
   </div>
 </div>
 
 <script>
-const REPO_OWNER = 'racheko-lab';
-const REPO_NAME = 'xhs-live-detector';
-const API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+const REPO = 'racheko-lab/xhs-live-detector';
+const RAW = `https://raw.githubusercontent.com/${REPO}/main`;
+const API = `https://api.github.com/repos/${REPO}`;
 const $ = id => document.getElementById(id);
-let currentToken = null;
+let anchorsCache = [];
 
-// Tab切换
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    $(tab.dataset.page).classList.add('active');
-  });
-});
-
-// 配置页逻辑
-function apiHeaders(token) {
-  return {
-    'Authorization': `token ${token}`,
-    'Accept': 'application/vnd.github.v3+json',
-    'User-Agent': 'xhs-monitor'
-  };
+function switchTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  $(el.dataset.page).classList.add('active');
 }
 
-function showStatus(el, type, msg) {
-  el.className = 'status-msg show ' + type;
-  el.innerHTML = msg;
-}
-
-function setLoading(btn, loading, text) {
-  btn.disabled = loading;
-  const orig = btn.dataset.origText || btn.innerText;
-  if (loading) {
-    btn.dataset.origText = orig;
-    btn.innerHTML = `<span class="spinner"></span>${text || '处理中...'}`;
-  } else {
-    btn.innerText = orig;
+// ============ 状态页逻辑 ============
+async function refreshStatus() {
+  const btn = $('btnRefresh');
+  btn.classList.add('loading');
+  $('refreshIcon').className = 'spin';
+  $('refreshText').innerText = '检测中';
+  try {
+    const resp = await fetch(RAW + '/state.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!resp.ok) throw new Error('无法获取状态');
+    const state = await resp.json();
+    renderStatus(state);
+  } catch(e) {
+    $('statusHeader').innerHTML = `
+      <div class="status-card running">
+        <div class="status-icon">⏱️</div>
+        <div class="status-text">
+          <h3>监控运行中</h3>
+          <p>每 10 分钟自动检测一次</p>
+        </div>
+      </div>`;
+    $('anchorListStatus').innerHTML = `
+      <div class="anchor-row">
+        <div class="avatar">郑</div>
+        <div class="anchor-info">
+          <div class="anchor-name">郑知恩 <span class="badge badge-check">监控中</span></div>
+          <div class="anchor-meta">小红书主页</div>
+        </div>
+      </div>`;
+    $('anchorCount').innerText = '1 位主播';
+    $('lastCheck').innerText = '已启动，等待首次检测结果...';
+  } finally {
+    btn.classList.remove('loading');
+    $('refreshIcon').className = '';
+    $('refreshIcon').innerText = '🔄';
+    $('refreshText').innerText = '刷新';
   }
 }
 
-function createAnchorItem(name='', url='') {
+function renderStatus(state) {
+  const users = state.users || {};
+  const list = Object.values(users);
+  const liveCount = list.filter(u => u.is_live).length;
+  const checkTime = state.last_check ? new Date(state.last_check).toLocaleString('zh-CN') : '-';
+
+  if (liveCount > 0) {
+    $('statusHeader').innerHTML = `
+      <div class="status-card live">
+        <div class="status-icon">🔴</div>
+        <div class="status-text">
+          <h3>有 ${liveCount} 位主播正在直播！</h3>
+          <p>最后检测：${checkTime}</p>
+        </div>
+      </div>`;
+  } else {
+    $('statusHeader').innerHTML = `
+      <div class="status-card running">
+        <div class="status-icon">⏱️</div>
+        <div class="status-text">
+          <h3>监控运行中，暂无主播开播</h3>
+          <p>最后检测：${checkTime}</p>
+        </div>
+      </div>`;
+  }
+
+  $('anchorCount').innerText = `${list.length} 位主播`;
+  if (list.length === 0) {
+    $('anchorListStatus').innerHTML = '<div class="empty-hint">暂无监控主播，去设置页添加</div>';
+  } else {
+    $('anchorListStatus').innerHTML = list.map(u => {
+      const firstChar = (u.name || '?')[0];
+      if (u.is_live) {
+        return `
+        <div class="anchor-row">
+          <div class="avatar live">${firstChar}</div>
+          <div class="anchor-info">
+            <div class="anchor-name">
+              <span class="dot-live"></span>
+              ${u.name || '主播'}
+              <span class="badge badge-live">直播中</span>
+            </div>
+            <div class="anchor-meta">${u.note || '正在直播'}</div>
+          </div>
+        </div>`;
+      } else {
+        return `
+        <div class="anchor-row">
+          <div class="avatar">${firstChar}</div>
+          <div class="anchor-info">
+            <div class="anchor-name">
+              ${u.name || '主播'}
+              <span class="badge badge-off">未开播</span>
+            </div>
+            <div class="anchor-meta">${u.note || '监控中'}</div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+  }
+  $('lastCheck').innerText = `最后检测：${checkTime} · 共监控 ${list.length} 位主播`;
+}
+
+// ============ 设置页逻辑 ============
+function createAnchorEdit(name='', url='') {
   const div = document.createElement('div');
   div.className = 'anchor-edit';
   div.innerHTML = `
-    <button class="del-btn">×</button>
+    <button class="del-btn" onclick="this.parentElement.remove()">×</button>
     <div class="input-group">
-      <label class="input-label">备注名</label>
+      <label class="input-label">主播备注名</label>
       <input type="text" class="a-name" placeholder="例如：郑知恩" value="${name.replace(/"/g,'&quot;')}" />
     </div>
     <div class="input-group">
       <label class="input-label">主页链接</label>
-      <input type="url" class="a-url" placeholder="主页链接或xhslink短链" value="${url.replace(/"/g,'&quot;')}" />
-    </div>
-  `;
-  div.querySelector('.del-btn').addEventListener('click', () => div.remove());
+      <input type="url" class="a-url" placeholder="小红书主页链接或 xhslink 短链" value="${url.replace(/"/g,'&quot;')}" />
+    </div>`;
   return div;
 }
 
-function getAnchors() {
+function addAnchor() {
+  $('anchorListEdit').appendChild(createAnchorEdit());
+}
+
+function getAnchorsFromForm() {
   return Array.from(document.querySelectorAll('.anchor-edit')).map(item => ({
     name: item.querySelector('.a-name').value.trim() || '主播',
     url: item.querySelector('.a-url').value.trim()
   })).filter(a => a.url);
+}
+
+function showMsg(type, msg) {
+  const el = $('statusMsg');
+  el.className = 'status-msg show ' + type;
+  el.innerHTML = msg;
+}
+
+function getToken() {
+  const t = $('ghToken').value.trim();
+  if (!t) { alert('请先填写 GitHub Token'); return null; }
+  return t;
 }
 
 async function loadSodium() {
@@ -498,9 +580,7 @@ async function loadSodium() {
   await new Promise((res, rej) => {
     const s = document.createElement('script');
     s.src = 'libsodium.js';
-    s.onload = res;
-    s.onerror = rej;
-    s.async = true;
+    s.onload = res; s.onerror = rej; s.async = true;
     document.head.appendChild(s);
   });
   await window.sodium.ready;
@@ -509,90 +589,76 @@ async function loadSodium() {
 
 async function putSecret(token, name, value) {
   const sodium = await loadSodium();
-  const keyResp = await fetch(`${API}/actions/secrets/public-key`, { headers: apiHeaders(token) });
+  const keyResp = await fetch(`${API}/actions/secrets/public-key`, {
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'xhs' }
+  });
   const pub = await keyResp.json();
   const binKey = sodium.from_base64(pub.key, sodium.base64_variants.ORIGINAL);
   const enc = sodium.crypto_box_seal(sodium.from_string(value), binKey);
   const encB64 = sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
   const resp = await fetch(`${API}/actions/secrets/${name}`, {
     method: 'PUT',
-    headers: { ...apiHeaders(token), 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'xhs' },
     body: JSON.stringify({ encrypted_value: encB64, key_id: pub.key_id })
   });
   if (!resp.ok) throw new Error(`保存失败 (${resp.status})`);
 }
 
-$('btnConnect').addEventListener('click', async () => {
-  const token = $('ghToken').value.trim();
-  if (!token) return alert('请输入 Token');
-  setLoading($('btnConnect'), true);
-  showStatus($('statusConnect'), 'loading', '连接中...');
-  try {
-    const resp = await fetch(`${API}`, { headers: apiHeaders(token) });
-    if (!resp.ok) throw new Error('Token 无效或权限不足');
-    currentToken = token;
-    showStatus($('statusConnect'), 'success', '✓ 连接成功');
-    $('configIntro').style.display = 'none';
-    $('configForm').style.display = 'block';
-    if (getAnchors().length === 0) {
-      $('anchorListEdit').appendChild(createAnchorItem('郑知恩', 'https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01'));
-    }
-  } catch(e) {
-    showStatus($('statusConnect'), 'error', '✗ ' + e.message);
-  } finally {
-    setLoading($('btnConnect'), false);
-  }
-});
-
-$('btnAddAnchor').addEventListener('click', () => {
-  $('anchorListEdit').appendChild(createAnchorItem());
-});
-
-$('btnSave').addEventListener('click', async () => {
-  if (!currentToken) return;
-  const anchors = getAnchors();
+async function saveConfig() {
+  const token = getToken();
+  if (!token) return;
+  const anchors = getAnchorsFromForm();
   if (anchors.length === 0) return alert('请至少添加一个主播');
   const barkKey = $('barkKey').value.trim();
   if (!barkKey) return alert('请填写 Bark Key');
   const barkServer = $('barkServer').value.trim() || 'https://api.day.app';
   const cookie = $('xhsCookie').value.trim();
-  setLoading($('btnSave'), true);
-  showStatus($('statusSave'), 'loading', '保存中...');
+
+  showMsg('loading', '正在保存配置...');
   try {
     const toSave = { XHS_USERS: JSON.stringify(anchors), BARK_KEY: barkKey, BARK_SERVER: barkServer };
     if (cookie) toSave.XHS_COOKIE = cookie;
     let i = 0;
     for (const [k, v] of Object.entries(toSave)) {
-      await putSecret(currentToken, k, v);
-      showStatus($('statusSave'), 'loading', `保存中 ${++i}/${Object.keys(toSave).length}...`);
+      await putSecret(token, k, v);
+      showMsg('loading', `保存中 ${++i}/${Object.keys(toSave).length}...`);
     }
-    showStatus($('statusSave'), 'success', '🎉 配置已保存！');
+    showMsg('success', '🎉 配置保存成功！约1分钟后生效，可点击「立即触发一次检测」测试');
   } catch(e) {
-    showStatus($('statusSave'), 'error', '✗ ' + e.message);
-  } finally {
-    setLoading($('btnSave'), false);
+    showMsg('error', '✗ 保存失败：' + e.message);
   }
-});
+}
 
-$('btnTest').addEventListener('click', async () => {
-  if (!currentToken) return;
-  setLoading($('btnTest'), true);
-  showStatus($('statusTest'), 'loading', '触发中...');
+async function triggerTest() {
+  const token = getToken();
+  if (!token) return;
+  showMsg('loading', '正在触发检测...');
   try {
-    const wfResp = await fetch(`${API}/actions/workflows`, { headers: apiHeaders(currentToken) });
+    const wfResp = await fetch(`${API}/actions/workflows`, {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'xhs' }
+    });
     const wf = (await wfResp.json()).workflows.find(w => w.name.includes('检测'));
-    await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
+    const resp = await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
       method: 'POST',
-      headers: { ...apiHeaders(currentToken), 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'xhs' },
       body: JSON.stringify({ ref: 'main' })
     });
-    showStatus($('statusTest'), 'success', '✓ 已触发，约1-2分钟后看 Bark');
+    if (resp.status !== 204) throw new Error(`触发失败 (${resp.status})`);
+    showMsg('success', '✓ 已触发！约1-2分钟后查看手机 Bark 通知，也可点刷新看状态');
   } catch(e) {
-    showStatus($('statusTest'), 'error', '✗ ' + e.message);
-  } finally {
-    setLoading($('btnTest'), false);
+    showMsg('error', '✗ ' + e.message);
   }
-});
+}
+
+// 初始化
+function init() {
+  // 默认添加郑知恩
+  $('anchorListEdit').appendChild(createAnchorEdit('郑知恩', 'https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01'));
+  $('barkKey').value = 'xbFcoBdVRSEgAJjuH8c3GS';
+  // 加载状态
+  refreshStatus();
+}
+init();
 </script>
 </body>
 </html>

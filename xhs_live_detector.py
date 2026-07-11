@@ -324,9 +324,11 @@ def run_once(cfg, debug=False):
             body = f"{nickname} 已结束直播\n时间: {now_str}"
             send_bark(cfg["bark_server"], cfg["bark_key"], title, body)
             any_change = True
+        user_state["is_live"] = living
         user_state["living"] = living
+        user_state["name"] = nickname
+        user_state["note"] = widget_text if widget_text else ("正在直播" if living else "监控中")
         user_state["last_check"] = now_str
-        user_state["nickname"] = nickname
         state["users"][user_id] = user_state
         time.sleep(2)
     state["last_check"] = now_str
