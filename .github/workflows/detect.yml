@@ -27,7 +27,7 @@ jobs:
 
       - name: 执行开播检测
         env:
-          XHS_USER_URL: ${{ secrets.XHS_USER_URL }}
+          XHS_USERS: ${{ secrets.XHS_USERS }}
           XHS_COOKIE: ${{ secrets.XHS_COOKIE }}
           BARK_KEY: ${{ secrets.BARK_KEY }}
           BARK_SERVER: ${{ secrets.BARK_SERVER }}
