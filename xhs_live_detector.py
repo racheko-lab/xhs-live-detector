@@ -122,52 +122,75 @@ def _safe_header(val):
     from urllib.parse import quote
     return quote(s, safe="=:;,/!?@&=+$()*'\"")
 
-def _do_request(url, headers, timeout):
-    """用 http.client 请求,返回 (最终URL, body)。自动跟随一次重定向(xhslink短链)。"""
-    import http.client
-    import ssl
-    from urllib.parse import urlparse
-    p = urlparse(url)
-    host = p.netloc
-    path = p.path or "/"
-    if p.query:
-        path += "?" + p.query
-    ctx = ssl.create_default_context()
-    conn = http.client.HTTPSConnection(host, timeout=timeout, context=ctx)
-    try:
-        conn.request("GET", path, headers={**headers, "Host": host})
-        resp = conn.getresponse()
-        # 处理重定向(302/301,xhslink 短链会跳转)
-        if resp.status in (301, 302, 303, 307, 308):
-            location = resp.getheader("Location", "")
-            if location:
-                conn.close()
-                return _do_request(location, headers, timeout)
-        data = resp.read()
-        charset = "utf-8"
-        ctype = resp.getheader("Content-Type", "")
-        if "charset=" in ctype:
-            charset = ctype.split("charset=")[-1].split(";")[0].strip()
-        body = data.decode(charset, errors="replace")
-        if resp.status >= 400:
-            raise Exception(f"HTTP {resp.status}: {body[:500]}")
-        return url, body
-    finally:
-        conn.close()
-
-def fetch_page(url, cookie, ua, timeout):
-    """抓取小红书页面 HTML。伪装 iOS App UA 才能拿到 liveStream 字段。"""
+def _get_headers(ua, cookie):
+    """构造小红书 iOS App 请求头(参考 streamget/DouyinLiveRecorder)"""
     headers = {
-        "User-Agent": _safe_header(ua),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9",
+        "user-agent": ua,
         "xy-common-params": "platform=iOS&sid=session.1722166379345546829388",
-        "Referer": "https://app.xhs.cn/",
+        "referer": "https://app.xhs.cn/",
     }
     if cookie:
-        headers["Cookie"] = _safe_header(cookie)
-    _, body = _do_request(url, headers, timeout)
-    return body
+        headers["Cookie"] = cookie
+    return headers
+
+def _resolve_short_url(url, headers, timeout):
+    """xhslink 短链:跟随重定向拿最终 URL(不取 body)"""
+    if "xhslink.com" not in url:
+        return url
+    try:
+        import httpx
+        with httpx.Client(http2=True, follow_redirects=True, timeout=timeout, verify=False) as c:
+            r = c.get(url, headers=headers)
+            final = str(r.url)
+            log.info("短链 %s → %s", url[:40], final[:80])
+            return final
+    except ImportError:
+        # httpx 不可用时,用 http.client 跟一次重定向
+        import http.client, ssl
+        from urllib.parse import urlparse
+        p = urlparse(url)
+        ctx = ssl.create_default_context()
+        conn = http.client.HTTPSConnection(p.netloc, timeout=timeout, context=ctx)
+        try:
+            conn.request("GET", p.path or "/", headers={**headers, "Host": p.netloc})
+            resp = conn.getresponse()
+            loc = resp.getheader("Location", "")
+            if loc:
+                log.info("短链(无httpx)%s → %s", url[:40], loc[:80])
+                return loc
+            return url
+        finally:
+            conn.close()
+
+def fetch_page(url, cookie, ua, timeout):
+    """抓取小红书页面 HTML。xhslink短链先解析最终URL再请求(参考streamget实现)。"""
+    headers = _get_headers(ua, cookie)
+    # 关键:xhslink 短链必须先跟重定向拿到最终URL,再请求最终URL拿HTML
+    final_url = _resolve_short_url(url, headers, timeout)
+    try:
+        import httpx
+        with httpx.Client(http2=True, timeout=timeout, verify=False) as c:
+            r = c.get(final_url, headers=headers)
+            r.raise_for_status()
+            return r.text
+    except ImportError:
+        # 降级:http.client
+        import http.client, ssl
+        from urllib.parse import urlparse
+        p = urlparse(final_url)
+        ctx = ssl.create_default_context()
+        conn = http.client.HTTPSConnection(p.netloc, timeout=timeout, context=ctx)
+        try:
+            conn.request("GET", (p.path or "/") + ("?" + p.query if p.query else ""), headers={**headers, "Host": p.netloc})
+            resp = conn.getresponse()
+            data = resp.read()
+            ctype = resp.getheader("Content-Type", "")
+            charset = "utf-8"
+            if "charset=" in ctype:
+                charset = ctype.split("charset=")[-1].split(";")[0].strip()
+            return data.decode(charset, errors="replace")
+        finally:
+            conn.close()
 
 
 def extract_initial_state(html):
