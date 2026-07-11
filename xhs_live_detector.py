@@ -138,10 +138,10 @@ def _resolve_short_url(url, headers, timeout):
         return url
     try:
         import httpx
-        with httpx.Client(http2=True, follow_redirects=True, timeout=timeout, verify=False) as c:
+        with httpx.Client(follow_redirects=True, timeout=timeout, verify=False) as c:
             r = c.get(url, headers=headers)
             final = str(r.url)
-            log.info("短链 %s → %s", url[:40], final[:80])
+            log.info("短链解析: %s -> %s", url[:40], final[:80])
             return final
     except ImportError:
         # httpx 不可用时,用 http.client 跟一次重定向
@@ -168,7 +168,7 @@ def fetch_page(url, cookie, ua, timeout):
     final_url = _resolve_short_url(url, headers, timeout)
     try:
         import httpx
-        with httpx.Client(http2=True, timeout=timeout, verify=False) as c:
+        with httpx.Client(timeout=timeout, verify=False) as c:
             r = c.get(final_url, headers=headers)
             r.raise_for_status()
             return r.text
