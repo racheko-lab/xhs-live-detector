@@ -115,18 +115,28 @@ def save_state(state_file, state):
 # ---------- 抓取 & 解析 ----------
 
 def fetch_page(url, cookie, ua, timeout):
-    headers = {
+    """用 urllib 抓取,避免 requests 在处理小红书 Set-Cookie 含非 latin-1 字符时报错"""
+    import urllib.request
+    import urllib.error
+    req = urllib.request.Request(url)
+    for k, v in {
         "User-Agent": ua,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "zh-CN,zh;q=0.9",
         "Referer": "https://www.xiaohongshu.com/",
-    }
+    }.items():
+        req.add_header(k, v)
     if cookie:
-        headers["Cookie"] = cookie
-    resp = requests.get(url, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    resp.encoding = resp.apparent_encoding or "utf-8"
-    return resp.text
+        req.add_header("Cookie", cookie)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
+            charset = resp.headers.get_content_charset() or "utf-8"
+            return data.decode(charset, errors="replace")
+    except urllib.error.HTTPError as e:
+        # HTTP 错误也读取 body,方便排查
+        body = e.read().decode("utf-8", errors="replace")[:500]
+        raise Exception(f"HTTP {e.code}: {body}") from e
 
 
 def extract_initial_state(html):
@@ -317,9 +327,6 @@ def main():
         log.info("单次检测模式")
         try:
             run_once(cfg)
-        except requests.HTTPError as e:
-            log.error("请求失败: %s (可能 Cookie 失效或被风控,HTTP %s)", e, e.response.status_code if e.response else "?")
-            sys.exit(1)
         except Exception as e:
             log.error("检测异常: %s", e)
             sys.exit(1)
@@ -332,8 +339,6 @@ def main():
     while True:
         try:
             run_once(cfg)
-        except requests.HTTPError as e:
-            log.error("请求失败: %s (可能 Cookie 失效或被风控,HTTP %s)", e, e.response.status_code if e.response else "?")
         except Exception as e:
             log.error("检测异常: %s", e)
         time.sleep(interval)
