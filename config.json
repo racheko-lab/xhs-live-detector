@@ -6,7 +6,7 @@
   "_注意": "GitHub Actions 部署时用 Secrets,本文件仅本地运行用;config.json 已被 .gitignore 忽略",
 
   "xhs_user_url": "https://www.xiaohongshu.com/user/profile/替换为你要监控的用户ID",
-  "xhs_cookie": "在此粘贴小红书网页版登录 Cookie(整行),不填可能看不到直播状态",
+  "xhs_cookie": "",
   "bark_key": "替换为你的Bark Key",
   "bark_server": "https://api.day.app",
 
