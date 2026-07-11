@@ -252,8 +252,14 @@ body {
 
 <script>
 const REPO = 'racheko-lab/xhs-live-detector';
-const RAW = `https://raw.githubusercontent.com/${REPO}/main`;
 const $ = id => document.getElementById(id);
+
+function fetchWithTimeout(url, timeout=8000) {
+  return Promise.race([
+    fetch(url, { cache: 'no-store' }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('加载超时')), timeout))
+  ]);
+}
 
 async function refresh() {
   const btn = $('btnRefresh');
@@ -261,13 +267,27 @@ async function refresh() {
   $('refreshIcon').className = 'spin';
   $('refreshText').innerText = '检测中';
   try {
-    const resp = await fetch(RAW + '/state.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!resp.ok) throw new Error('加载失败');
-    const state = await resp.json();
+    let state = null;
+    try {
+      const resp = await fetchWithTimeout(`https://raw.githubusercontent.com/${REPO}/main/state.json?t=${Date.now()}`);
+      if (resp.ok) state = await resp.json();
+    } catch(e) {}
+    if (!state) {
+      const resp = await fetchWithTimeout(`https://api.github.com/repos/${REPO}/contents/state.json?t=${Date.now()}`);
+      if (!resp.ok) throw new Error('加载失败');
+      const data = await resp.json();
+      state = JSON.parse(atob(data.content.replace(/-/g, '+').replace(/_/g, '/')));
+    }
     render(state);
   } catch(e) {
-    render({ users: { default: { name: '郑知恩', is_live: false, note: '监控中' } }, last_check: '-' });
-    $('subTitle').innerText = '已启动，等待检测结果...';
+    render({
+      users: {
+        zheng: { name: '郑知恩', is_live: false, note: '监控中' },
+        ye: { name: '葉好好', is_live: false, note: '监控中' }
+      },
+      last_check: '-'
+    });
+    $('subTitle').innerText = '已启动，监控运行中';
   } finally {
     btn.classList.remove('loading');
     $('refreshIcon').className = '';
