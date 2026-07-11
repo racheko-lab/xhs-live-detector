@@ -345,9 +345,19 @@ def extract_nickname(state, html):
 
 
 def extract_user_id(url):
-    """从URL中提取小红书用户ID"""
+    """从URL中提取小红书用户ID,支持多种URL格式包括登录重定向"""
     if not url:
         return url
+    from urllib.parse import urlparse, parse_qs, unquote
+    parsed = urlparse(url)
+    if "/login" in parsed.path:
+        qs = parse_qs(parsed.query)
+        redirect = qs.get("redirectPath", [""])[0]
+        if redirect:
+            redirect = unquote(redirect)
+            m = re.search(r"/user/profile/([a-f0-9]+)", redirect)
+            if m:
+                return m.group(1)
     m = re.search(r"/user/profile/([a-f0-9]+)", url)
     if m:
         return m.group(1)
@@ -389,6 +399,20 @@ def check_user(user_cfg, cookie, ua, timeout, debug=False):
     url = user_cfg["url"]
     custom_name = user_cfg.get("name", "")
     final_url, html = fetch_page(url, cookie, ua, timeout)
+    
+    if "/login" in final_url:
+        log.warning("[%s] 被重定向到登录页, Cookie可能无效或过期", custom_name or url[:40])
+        from urllib.parse import urlparse, parse_qs, unquote
+        parsed = urlparse(final_url)
+        qs = parse_qs(parsed.query)
+        redirect = qs.get("redirectPath", [""])[0]
+        if redirect:
+            original_url = "https://www.xiaohongshu.com" + unquote(redirect)
+            log.info("[%s] 尝试不带Cookie直接访问原始URL...", custom_name or url[:40])
+            final_url2, html2 = fetch_page(original_url, "", ua, timeout)
+            if "/login" not in final_url2:
+                final_url, html = final_url2, html2
+    
     state = extract_initial_state(html)
     nickname = custom_name or "小红书用户"
     living = False
@@ -408,7 +432,8 @@ def check_user(user_cfg, cookie, ua, timeout, debug=False):
                 nickname = custom_name or page_nickname
             living, live_info = find_live_info(None, html)
             widget_text = (live_info or {}).get("title", "")
-        log.warning("[%s] 未解析到 __INITIAL_STATE__", custom_name or url[:40])
+        if "/login" not in final_url:
+            log.warning("[%s] 未解析到 __INITIAL_STATE__", custom_name or url[:40])
     
     if debug and live_info:
         log.info("[%s] 检测来源: %s", nickname, live_info.get("source", "unknown"))
