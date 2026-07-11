@@ -70,7 +70,9 @@ def load_config():
         if cfg_key == "xhs_users":
             try:
                 val = json.loads(val)
-            except Exception:
+                log.info("从环境变量加载 XHS_USERS: %d 个主播", len(val))
+            except Exception as e:
+                log.warning("解析环境变量 XHS_USERS 失败: %s, 原始值长度: %d", e, len(val))
                 continue
         elif cfg_key in ("check_interval_seconds", "remind_interval_seconds", "request_timeout"):
             try:
