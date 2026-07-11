@@ -114,29 +114,53 @@ def save_state(state_file, state):
 
 # ---------- 抓取 & 解析 ----------
 
+def _safe_header(val):
+    """把 header 值转成 latin-1 安全字符串(非 ascii 字符做 percent-encoding)"""
+    if val is None:
+        return ""
+    s = str(val)
+    if all(ord(c) < 128 for c in s):
+        return s
+    # 含非 ascii 字符时,做 percent-encoding
+    from urllib.parse import quote
+    return quote(s, safe="=:;,/!?@&=+$()*'\"")
+
 def fetch_page(url, cookie, ua, timeout):
-    """用 urllib 抓取,避免 requests 在处理小红书 Set-Cookie 含非 latin-1 字符时报错"""
-    import urllib.request
-    import urllib.error
-    req = urllib.request.Request(url)
-    for k, v in {
-        "User-Agent": ua,
+    """用 http.client 直接请求,避免 urllib/requests 对非 latin-1 header 的处理问题"""
+    import http.client
+    import ssl
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    host = p.netloc
+    path = p.path or "/"
+    if p.query:
+        path += "?" + p.query
+    ctx = ssl.create_default_context()
+    conn = http.client.HTTPSConnection(host, timeout=timeout, context=ctx)
+    headers = {
+        "User-Agent": _safe_header(ua),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "zh-CN,zh;q=0.9",
         "Referer": "https://www.xiaohongshu.com/",
-    }.items():
-        req.add_header(k, v)
+        "Host": host,
+    }
     if cookie:
-        req.add_header("Cookie", cookie)
+        headers["Cookie"] = _safe_header(cookie)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = resp.read()
-            charset = resp.headers.get_content_charset() or "utf-8"
-            return data.decode(charset, errors="replace")
-    except urllib.error.HTTPError as e:
-        # HTTP 错误也读取 body,方便排查
-        body = e.read().decode("utf-8", errors="replace")[:500]
-        raise Exception(f"HTTP {e.code}: {body}") from e
+        conn.request("GET", path, headers=headers)
+        resp = conn.getresponse()
+        data = resp.read()
+        # 从 Content-Type 取 charset
+        charset = "utf-8"
+        ctype = resp.getheader("Content-Type", "")
+        if "charset=" in ctype:
+            charset = ctype.split("charset=")[-1].split(";")[0].strip()
+        body = data.decode(charset, errors="replace")
+        if resp.status >= 400:
+            raise Exception(f"HTTP {resp.status}: {body[:500]}")
+        return body
+    finally:
+        conn.close()
 
 
 def extract_initial_state(html):
