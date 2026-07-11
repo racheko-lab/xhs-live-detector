@@ -124,12 +124,18 @@ def _safe_header(val):
 def _get_headers(ua, cookie):
     """构造小红书 iOS App 请求头(参考 streamget/DouyinLiveRecorder)"""
     headers = {
-        "user-agent": ua,
+        "User-Agent": ua,
         "xy-common-params": "platform=iOS&sid=session.1722166379345546829388",
-        "referer": "https://app.xhs.cn/",
+        "Referer": "https://app.xhs.cn/",
     }
     if cookie:
         headers["Cookie"] = cookie
+    # 调试:确认所有 header 值都是 ASCII
+    for k, v in headers.items():
+        try:
+            v.encode("ascii")
+        except UnicodeEncodeError as e:
+            log.warning("header[%s] 含非ASCII字符: %s (位置 %s)", k, repr(v), e)
     return headers
 
 def _resolve_short_url(url, headers, timeout):
