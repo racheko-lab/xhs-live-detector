@@ -1,469 +1,607 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>小红书开播检测 · 配置面板</title>
-  <style>
-    :root {
-      --red: #ff2442;
-      --red-dark: #e01e3a;
-      --bg: #f2f3f5;
-      --card: #ffffff;
-      --text: #1a1a1a;
-      --text-2: #666;
-      --text-3: #999;
-      --border: #ebedf0;
-      --green: #07c160;
-      --blue: #1989fa;
-      --radius: 12px;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.5;
-      padding-bottom: 40px;
-    }
-    .header {
-      background: linear-gradient(135deg, var(--red), var(--red-dark));
-      color: #fff;
-      padding: 28px 20px 32px;
-      text-align: center;
-    }
-    .logo {
-      width: 52px; height: 52px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 14px;
-      line-height: 52px;
-      font-size: 26px;
-      font-weight: bold;
-      margin: 0 auto 10px;
-      backdrop-filter: blur(10px);
-    }
-    h1 { font-size: 20px; font-weight: 600; }
-    .subtitle { font-size: 13px; opacity: 0.85; margin-top: 4px; }
-    .container { max-width: 560px; margin: -16px auto 0; padding: 0 16px; }
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .card-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title .num {
-      width: 20px; height: 20px;
-      background: var(--red);
-      color: #fff;
-      border-radius: 50%;
-      font-size: 11px;
-      text-align: center;
-      line-height: 20px;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-    .field { margin-bottom: 12px; }
-    .field:last-child { margin-bottom: 0; }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-    .hint { font-size: 11px; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
-    input, textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      background: #fafafa;
-      transition: all .2s;
-      -webkit-appearance: none;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: var(--red);
-      background: #fff;
-    }
-    textarea { min-height: 60px; resize: vertical; }
-    .user-item {
-      background: #fafafa;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-    .user-item:last-child { margin-bottom: 0; }
-    .user-item .del-btn {
-      position: absolute;
-      top: 8px; right: 8px;
-      width: 28px; height: 28px;
-      background: #fff0f0;
-      color: var(--red);
-      border: none;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-    .user-item .field { margin-bottom: 10px; }
-    .user-item .field:last-child { margin-bottom: 0; }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity .2s, transform .1s;
-      -webkit-appearance: none;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.5; }
-    .btn-primary { background: var(--red); color: #fff; }
-    .btn-secondary {
-      background: #f7f8fa;
-      color: var(--text);
-      border: 1px solid var(--border);
-      margin-top: 8px;
-    }
-    .btn-green { background: var(--green); color: #fff; }
-    .btn-add {
-      background: #fff7f8;
-      color: var(--red);
-      border: 1px dashed var(--red);
-      margin-top: 10px;
-    }
-    .status {
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      display: none;
-      word-break: break-all;
-    }
-    .status.show { display: block; }
-    .status.ok { background: #e8f8ee; color: #0a8a3a; }
-    .status.err { background: #fde8ea; color: #b3261e; }
-    .status.info { background: #e8f3ff; color: #1677ff; }
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      vertical-align: -2px;
-      margin-right: 6px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .secret-tags { margin-top: 8px; }
-    .secret-tags .tag {
-      display: inline-block;
-      padding: 3px 8px;
-      background: #e8f8ee;
-      color: #0a8a3a;
-      border-radius: 4px;
-      margin: 2px 4px 2px 0;
-      font-size: 12px;
-    }
-    .footer {
-      text-align: center;
-      color: var(--text-3);
-      font-size: 11px;
-      padding: 20px 16px 8px;
-      line-height: 1.6;
-    }
-    .warn {
-      background: #fffbe6;
-      color: #8a6d00;
-      padding: 10px 12px;
-      border-radius: var(--radius);
-      font-size: 12px;
-      margin-bottom: 12px;
-      border: 1px solid #fff1b8;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>小红书开播监控</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --red: #FF2442;
+  --red-light: #FFF0F2;
+  --bg: #F5F6F8;
+  --card: #FFFFFF;
+  --text: #1D2129;
+  --text-2: #86909C;
+  --border: #E5E6EB;
+  --green: #00B42A;
+  --orange: #FF7D00;
+  --blue: #165DFF;
+  --radius: 16px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+.nav {
+  background: linear-gradient(135deg, var(--red), #FF6B7A);
+  color: white;
+  padding: 48px 20px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav h1 {
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav p {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+.container {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: 100px;
+}
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title span {
+  width: 24px; height: 24px;
+  background: var(--red);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+.input-group { margin-bottom: 14px; }
+.input-group:last-child { margin-bottom: 0; }
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: block;
+}
+.input-hint {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+input, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #FAFAFA;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--red);
+  background: white;
+}
+textarea { min-height: 70px; resize: vertical; }
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-appearance: none;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+.btn-primary {
+  background: var(--red);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255,36,66,0.25);
+}
+.btn-secondary {
+  background: white;
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn-add {
+  background: var(--red-light);
+  color: var(--red);
+  border: 1.5px dashed var(--red);
+  font-weight: 500;
+}
+.btn-small {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  padding: 6px 10px;
+  font-size: 12px;
+  width: auto;
+}
+.anchor-item {
+  background: #FAFBFC;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  position: relative;
+  transition: all 0.2s;
+}
+.anchor-item:hover { border-color: var(--red); }
+.anchor-item .delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: #FFF1F0;
+  color: var(--red);
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.anchor-item .input-group { margin-bottom: 10px; }
+.anchor-item .input-group:last-child { margin-bottom: 0; }
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 6px;
+}
+.status-live { background: #E8FFEA; color: var(--green); }
+.status-off { background: #F2F3F5; color: var(--text-2); }
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.status-msg {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: none;
+  word-break: break-all;
+}
+.status-msg.show { display: block; }
+.status-msg.success { background: #E8FFEA; color: #008020; }
+.status-msg.error { background: #FFECE8; color: #CB2634; }
+.status-msg.loading { background: #E8F3FF; color: var(--blue); }
+.config-done {
+  background: linear-gradient(135deg, #E8FFEA 0%, #D7F5DC 100%);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.config-done .icon {
+  width: 40px;
+  height: 40px;
+  background: var(--green);
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.config-done .text h3 { font-size: 15px; color: #008020; margin-bottom: 2px; }
+.config-done .text p { font-size: 12px; color: #2C7A3F; }
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+.saved-config {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.saved-config .tag {
+  background: var(--red-light);
+  color: var(--red);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.footer {
+  text-align: center;
+  color: var(--text-2);
+  font-size: 11px;
+  margin-top: 20px;
+  line-height: 1.6;
+}
+</style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">📺</div>
-    <h1>小红书开播检测</h1>
-    <p class="subtitle">开播自动 Bark 推送 · 支持多主播</p>
+<div class="nav">
+  <h1>📺 小红书开播监控</h1>
+  <p>主播开播自动推送 Bark，支持多人监控</p>
+</div>
+
+<div class="container">
+  <div id="connectedBox" style="display:none;">
+    <div class="config-done">
+      <div class="icon">✓</div>
+      <div class="text">
+        <h3>已连接 GitHub</h3>
+        <p>仓库: racheko-lab/xhs-live-detector</p>
+      </div>
+    </div>
   </div>
 
-  <div class="container">
-    <div class="warn">
-      ⚠️ GitHub Token 仅在浏览器本地使用，不会上传到任何服务器。配置完成后建议去 GitHub 撤销该 Token。
+  <div class="card" id="tokenCard">
+    <div class="card-head">
+      <div class="card-title"><span>1</span>GitHub 连接</div>
     </div>
-
-    <!-- 步骤1: GitHub Token -->
-    <div class="card">
-      <div class="card-title"><span class="num">1</span>GitHub Token</div>
-      <div class="field">
-        <label>Personal Access Token</label>
-        <input type="password" id="token" placeholder="ghp_xxxxxx" autocomplete="off" />
-        <div class="hint">需要 repo 权限，创建地址：github.com/settings/tokens/new</div>
+    <div class="input-group">
+      <label class="input-label">Personal Access Token</label>
+      <input type="password" id="ghToken" placeholder="ghp_xxxxxx，需要 repo 权限" autocomplete="off" />
+      <div class="input-hint">
+        创建地址：github.com/settings/tokens/new<br/>
+        勾选 <b>repo</b> 权限即可，Token 仅在本地浏览器使用
       </div>
-      <button class="btn btn-secondary" id="btnCheck">检查当前配置</button>
-      <div class="status info" id="statusCheck"></div>
-      <div class="secret-tags" id="secretList"></div>
     </div>
+    <button class="btn btn-secondary" id="btnConnect">连接并加载配置</button>
+    <div class="status-msg" id="statusConnect"></div>
+  </div>
 
-    <!-- 步骤2: 主播列表 -->
+  <div id="configArea" style="display:none;">
     <div class="card">
-      <div class="card-title"><span class="num">2</span>监控主播列表</div>
-      <div id="userList"></div>
-      <button class="btn btn-add" id="btnAddUser">+ 添加主播</button>
-      <div class="hint">每个主播填写备注名（方便识别）和小红书主页链接（支持 xhslink 短链）</div>
+      <div class="card-head">
+        <div class="card-title"><span>2</span>监控主播列表</div>
+      </div>
+      <div id="anchorList"></div>
+      <button class="btn btn-add" id="btnAddAnchor">+ 添加主播</button>
+      <div class="input-hint" style="margin-top:10px;">
+        💡 主页链接支持 xhslink 短链，系统会自动解析
+      </div>
     </div>
 
-    <!-- 步骤3: 推送配置 -->
     <div class="card">
-      <div class="card-title"><span class="num">3</span>Bark 推送配置</div>
-      <div class="field">
-        <label>Bark Key</label>
-        <input type="text" id="bark_key" placeholder="打开 Bark App 首页顶部那串字符" autocomplete="off" />
+      <div class="card-head">
+        <div class="card-title"><span>3</span>Bark 推送配置</div>
       </div>
-      <div class="field">
-        <label>Bark 服务器地址</label>
-        <input type="text" id="bark_server" value="https://api.day.app" />
-        <div class="hint">官方服务器填 https://api.day.app 即可</div>
+      <div class="input-group">
+        <label class="input-label">Bark Key</label>
+        <input type="text" id="barkKey" placeholder="Bark App 首页顶部的字符串" autocomplete="off" />
       </div>
-      <div class="field">
-        <label>小红书 Cookie（选填）</label>
-        <textarea id="xhs_cookie" placeholder="浏览器登录小红书后，F12 → Network → 复制 Cookie"></textarea>
-        <div class="hint">建议填写，能提高检测准确率</div>
+      <div class="input-group">
+        <label class="input-label">Bark 服务器</label>
+        <input type="text" id="barkServer" value="https://api.day.app" />
+        <div class="input-hint">用官方服务器保持默认即可</div>
       </div>
-      <button class="btn btn-primary" id="btnSave" style="margin-top:4px;">保存配置</button>
-      <div class="status" id="statusSave"></div>
+      <div class="input-group">
+        <label class="input-label">小红书 Cookie（选填）</label>
+        <textarea id="xhsCookie" placeholder="登录小红书网页版后，F12 → Network → 复制 Cookie"></textarea>
+        <div class="input-hint">填写 Cookie 可以提高检测准确率</div>
+      </div>
     </div>
 
-    <!-- 步骤4: 测试 -->
-    <div class="card">
-      <div class="card-title"><span class="num">4</span>立即测试</div>
-      <p class="hint" style="margin: 0 0 12px;">保存配置后点下面按钮，手动触发一次检测（约1-2分钟后看手机 Bark）</p>
-      <button class="btn btn-green" id="btnRun">触发一次检测</button>
-      <div class="status" id="statusRun"></div>
-    </div>
+    <button class="btn btn-primary" id="btnSave">💾 保存所有配置</button>
+    <div class="status-msg" id="statusSave"></div>
 
-    <div class="footer">
-      配置加密保存在 GitHub Secrets，不会出现在公开代码中。<br/>
-      每 10 分钟自动检测一次，开播/下播即时推送 Bark。
+    <div class="card" style="margin-top:12px;">
+      <div class="card-head">
+        <div class="card-title"><span>4</span>测试运行</div>
+      </div>
+      <p style="font-size:13px; color:var(--text-2); margin-bottom:12px;">
+        保存配置后点击下方按钮，立即触发一次检测，约1-2分钟后手机会收到 Bark 通知
+      </p>
+      <button class="btn btn-secondary" id="btnTest">▶️ 立即触发一次检测</button>
+      <div class="status-msg" id="statusTest"></div>
     </div>
   </div>
+
+  <div class="footer">
+    配置加密存储在 GitHub Secrets，每10分钟自动检测一次<br/>
+    开播/下播即时推送 Bark 通知
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const REPO_OWNER = "racheko-lab";
-const REPO_NAME = "xhs-live-detector";
+const REPO_OWNER = 'racheko-lab';
+const REPO_NAME = 'xhs-live-detector';
 const API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
 
 const $ = id => document.getElementById(id);
-const showStatus = (el, type, msg) => {
-  el.className = "status show " + type;
-  el.innerHTML = msg;
-};
-const setLoading = (btn, loading, text) => {
-  btn.disabled = loading;
-  const origText = btn.dataset.origText || btn.innerText;
-  if (loading) {
-    btn.dataset.origText = origText;
-    btn.innerHTML = `<span class="spinner"></span>${text || "处理中..."}`;
-  } else {
-    btn.innerText = origText;
-  }
-};
+let sodiumReady = false;
 
-function headers(token, extra={}) {
-  return Object.assign({
-    "Authorization": `token ${token}`,
-    "Accept": "application/vnd.github+json",
-  }, extra);
+function toast(msg, duration=2000) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
 }
 
-// ---------- 主播列表管理 ----------
-function createUserItem(name = "", url = "") {
-  const div = document.createElement("div");
-  div.className = "user-item";
+function showStatus(el, type, msg) {
+  el.className = 'status-msg show ' + type;
+  el.innerHTML = msg;
+}
+
+function setLoading(btn, loading, text) {
+  btn.disabled = loading;
+  const orig = btn.dataset.origText || btn.innerText;
+  if (loading) {
+    btn.dataset.origText = orig;
+    btn.innerHTML = `<span class="spinner"></span>${text || '处理中...'}`;
+  } else {
+    btn.innerText = orig;
+  }
+}
+
+function apiHeaders(token) {
+  return {
+    'Authorization': `token ${token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'xhs-config-page'
+  };
+}
+
+// Sodium 加密
+async function loadSodium() {
+  if (window.sodium && sodiumReady) return window.sodium;
+  const sources = [
+    'libsodium.js',
+    'https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js'
+  ];
+  for (const src of sources) {
+    try {
+      await new Promise((res, rej) => {
+        if (src.startsWith('http') && window.sodium) return res();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = res;
+        s.onerror = rej;
+        s.async = true;
+        document.head.appendChild(s);
+      });
+      if (window.sodium) {
+        await window.sodium.ready;
+        sodiumReady = true;
+        return window.sodium;
+      }
+    } catch(e) {}
+  }
+  throw new Error('加密库加载失败');
+}
+
+async function getSecret(name, token) {
+  try {
+    const resp = await fetch(`${API}/actions/secrets/${name}`, { headers: apiHeaders(token) });
+    return resp.ok;
+  } catch { return false; }
+}
+
+async function listSecrets(token) {
+  const resp = await fetch(`${API}/actions/secrets`, { headers: apiHeaders(token) });
+  if (!resp.ok) throw new Error('Token 无效或权限不足');
+  return (await resp.json()).secrets.map(s => s.name);
+}
+
+async function putSecret(token, name, value) {
+  const sodium = await loadSodium();
+  const keyResp = await fetch(`${API}/actions/secrets/public-key`, { headers: apiHeaders(token) });
+  const pub = await keyResp.json();
+  const binKey = sodium.from_base64(pub.key, sodium.base64_variants.ORIGINAL);
+  const binVal = sodium.from_string(value);
+  const enc = sodium.crypto_box_seal(binVal, binKey);
+  const encB64 = sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
+  const resp = await fetch(`${API}/actions/secrets/${name}`, {
+    method: 'PUT',
+    headers: { ...apiHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ encrypted_value: encB64, key_id: pub.key_id })
+  });
+  if (!resp.ok) throw new Error(`保存 ${name} 失败 (${resp.status})`);
+}
+
+// 主播UI
+function createAnchorItem(name='', url='') {
+  const div = document.createElement('div');
+  div.className = 'anchor-item';
   div.innerHTML = `
-    <button class="del-btn" onclick="this.parentElement.remove()">×</button>
-    <div class="field">
-      <label>备注名</label>
-      <input type="text" class="user-name" placeholder="如：郑知恩" value="${name.replace(/"/g, '&quot;')}" />
+    <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+    <div class="input-group">
+      <label class="input-label">主播备注名</label>
+      <input type="text" class="a-name" placeholder="例如：郑知恩" value="${name.replace(/"/g,'&quot;')}" />
     </div>
-    <div class="field">
-      <label>主页链接</label>
-      <input type="url" class="user-url" placeholder="https://www.xiaohongshu.com/user/profile/... 或 xhslink 短链" value="${url.replace(/"/g, '&quot;')}" />
+    <div class="input-group">
+      <label class="input-label">主页链接</label>
+      <input type="url" class="a-url" placeholder="粘贴小红书主页链接或xhslink短链" value="${url.replace(/"/g,'&quot;')}" />
     </div>
   `;
   return div;
 }
 
-function getUserList() {
-  const items = document.querySelectorAll("#userList .user-item");
-  const users = [];
+function getAnchors() {
+  const items = document.querySelectorAll('.anchor-item');
+  const result = [];
   items.forEach(item => {
-    const name = item.querySelector(".user-name").value.trim();
-    const url = item.querySelector(".user-url").value.trim();
-    if (url) {
-      users.push({ name: name || "主播", url: url });
-    }
+    const name = item.querySelector('.a-name').value.trim();
+    const url = item.querySelector('.a-url').value.trim();
+    if (url) result.push({ name: name || '主播', url });
   });
-  return users;
+  return result;
 }
 
-$("btnAddUser").addEventListener("click", () => {
-  $("userList").appendChild(createUserItem());
-});
-
-// 初始化默认一个空的主播项
-$("userList").appendChild(createUserItem("郑知恩", "https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01"));
-
-// ---------- libsodium 加载 ----------
-const SODIUM_SOURCES = [
-  "libsodium.js",
-  "https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js",
-];
-function loadScript(src, timeoutMs = 15000) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = src;
-    s.async = true;
-    const timer = setTimeout(() => { s.onload = s.onerror = null; reject(new Error("超时")); }, timeoutMs);
-    s.onload = () => { clearTimeout(timer); resolve(); };
-    s.onerror = () => { clearTimeout(timer); reject(new Error("失败")); };
-    document.head.appendChild(s);
-  });
-}
-async function loadSodium() {
-  if (window.sodium) { await window.sodium.ready; return window.sodium; }
-  const errs = [];
-  for (const url of SODIUM_SOURCES) {
-    try { await loadScript(url); if (window.sodium) { await window.sodium.ready; return window.sodium; } }
-    catch (e) { errs.push(url.includes("http") ? "CDN" : "本地"); }
-  }
-  throw new Error("加密库加载失败: " + errs.join(","));
-}
-
-// ---------- GitHub API ----------
-async function getPublicKey(token) {
-  const resp = await fetch(`${API}/actions/secrets/public-key`, { headers: headers(token) });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
-}
-async function encryptSecret(publicKey, secret) {
-  const sodium = await loadSodium();
-  const binKey = sodium.from_base64(publicKey.key, sodium.base64_variants.ORIGINAL);
-  const binSec = sodium.from_string(secret);
-  const enc = sodium.crypto_box_seal(binSec, binKey);
-  return sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
-}
-async function putSecret(token, name, value) {
-  const pub = await getPublicKey(token);
-  const enc = await encryptSecret(pub, value);
-  const resp = await fetch(`${API}/actions/secrets/${name}`, {
-    method: "PUT",
-    headers: headers(token, {"Content-Type": "application/json"}),
-    body: JSON.stringify({ encrypted_value: enc, key_id: pub.key_id }),
-  });
-  if (!resp.ok) throw new Error(`${name} 失败 HTTP ${resp.status}`);
-}
-async function listSecrets(token) {
-  const resp = await fetch(`${API}/actions/secrets`, { headers: headers(token) });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return (await resp.json()).secrets.map(s => s.name);
-}
-async function triggerWorkflow(token) {
-  const resp = await fetch(`${API}/actions/workflows`, { headers: headers(token) });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const wf = (await resp.json()).workflows.find(w => w.name.includes("检测"));
-  if (!wf) throw new Error("未找到工作流");
-  const r = await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
-    method: "POST",
-    headers: headers(token, {"Content-Type": "application/json"}),
-    body: JSON.stringify({ ref: "main" }),
-  });
-  if (r.status !== 204) throw new Error(`触发失败 HTTP ${r.status}`);
-}
-
-// ---------- 事件 ----------
-$("btnCheck").addEventListener("click", async () => {
-  const token = $("token").value.trim();
-  if (!token) { showStatus($("statusCheck"), "err", "请先填入 Token"); return; }
-  setLoading($("btnCheck"), true);
+// 连接GitHub
+$('btnConnect').addEventListener('click', async () => {
+  const token = $('ghToken').value.trim();
+  if (!token) { toast('请输入 Token'); return; }
+  setLoading($('btnConnect'), true);
+  showStatus($('statusConnect'), 'loading', '正在连接...');
   try {
     const names = await listSecrets(token);
-    showStatus($("statusCheck"), "ok", `✓ 连接成功，已配置 ${names.length} 个 Secret`);
-    $("secretList").innerHTML = names.length
-      ? '<div class="secret-tags">已配置: ' + names.map(n => `<span class="tag">${n}</span>`).join("") + '</div>'
-      : "";
-  } catch(e) {
-    showStatus($("statusCheck"), "err", "✗ 连接失败: " + e.message);
-    $("secretList").innerHTML = "";
-  } finally { setLoading($("btnCheck"), false); }
-});
-
-$("btnSave").addEventListener("click", async () => {
-  const token = $("token").value.trim();
-  if (!token) { showStatus($("statusSave"), "err", "请先填入 Token"); return; }
-  const users = getUserList();
-  if (users.length === 0) { showStatus($("statusSave"), "err", "请至少添加一个主播"); return; }
-  const bark_key = $("bark_key").value.trim();
-  if (!bark_key) { showStatus($("statusSave"), "err", "请填写 Bark Key"); return; }
-  const bark_server = $("bark_server").value.trim() || "https://api.day.app";
-  const xhs_cookie = $("xhs_cookie").value.trim();
-
-  setLoading($("btnSave"), true);
-  const results = [];
-  const cfg = {
-    XHS_USERS: JSON.stringify(users),
-    BARK_KEY: bark_key,
-    BARK_SERVER: bark_server,
-  };
-  if (xhs_cookie) cfg.XHS_COOKIE = xhs_cookie;
-
-  try {
-    for (const [name, value] of Object.entries(cfg)) {
-      await putSecret(token, name, value);
-      results.push(`✓ ${name}`);
-      showStatus($("statusSave"), "info", results.join("<br>"));
+    showStatus($('statusConnect'), 'success', '✓ 连接成功！');
+    $('connectedBox').style.display = 'block';
+    $('tokenCard').style.display = 'none';
+    $('configArea').style.display = 'block';
+    $('btnConnect').dataset.token = token;
+    // 默认添加一个主播
+    if (getAnchors().length === 0) {
+      $('anchorList').appendChild(createAnchorItem('郑知恩', 'https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01'));
     }
-    showStatus($("statusSave"), "ok", "🎉 配置已保存！<br>" + results.join("<br>"));
+    toast('连接成功');
   } catch(e) {
-    results.push("✗ " + e.message);
-    showStatus($("statusSave"), "err", results.join("<br>"));
-  } finally { setLoading($("btnSave"), false); }
+    showStatus($('statusConnect'), 'error', '✗ 连接失败：' + e.message);
+  } finally {
+    setLoading($('btnConnect'), false);
+  }
 });
 
-$("btnRun").addEventListener("click", async () => {
-  const token = $("token").value.trim();
-  if (!token) { showStatus($("statusRun"), "err", "请先填入 Token"); return; }
-  setLoading($("btnRun"), true);
+// 添加主播
+$('btnAddAnchor').addEventListener('click', () => {
+  $('anchorList').appendChild(createAnchorItem());
+});
+
+// 保存配置
+$('btnSave').addEventListener('click', async () => {
+  const token = $('btnConnect').dataset.token;
+  if (!token) { toast('请先连接 GitHub'); return; }
+  const anchors = getAnchors();
+  if (anchors.length === 0) { toast('请至少添加一个主播'); return; }
+  const barkKey = $('barkKey').value.trim();
+  if (!barkKey) { toast('请填写 Bark Key'); return; }
+  const barkServer = $('barkServer').value.trim() || 'https://api.day.app';
+  const cookie = $('xhsCookie').value.trim();
+
+  setLoading($('btnSave'), true);
+  showStatus($('statusSave'), 'loading', '正在保存配置...');
   try {
-    await triggerWorkflow(token);
-    showStatus($("statusRun"), "ok", "✓ 已触发！约1-2分钟后查看手机 Bark 通知，或去 Actions 看日志。");
+    const toSave = {
+      'XHS_USERS': JSON.stringify(anchors),
+      'BARK_KEY': barkKey,
+      'BARK_SERVER': barkServer
+    };
+    if (cookie) toSave['XHS_COOKIE'] = cookie;
+    let i = 0;
+    for (const [k, v] of Object.entries(toSave)) {
+      await putSecret(token, k, v);
+      i++;
+      showStatus($('statusSave'), 'loading', `保存中... ${i}/${Object.keys(toSave).length}`);
+    }
+    showStatus($('statusSave'), 'success', '🎉 所有配置已保存成功！');
+    toast('配置保存成功');
   } catch(e) {
-    showStatus($("statusRun"), "err", "✗ " + e.message);
-  } finally { setLoading($("btnRun"), false); }
+    showStatus($('statusSave'), 'error', '✗ 保存失败：' + e.message);
+  } finally {
+    setLoading($('btnSave'), false);
+  }
+});
+
+// 触发测试
+$('btnTest').addEventListener('click', async () => {
+  const token = $('btnConnect').dataset.token;
+  if (!token) { toast('请先连接 GitHub'); return; }
+  setLoading($('btnTest'), true);
+  showStatus($('statusTest'), 'loading', '正在触发检测...');
+  try {
+    const wfResp = await fetch(`${API}/actions/workflows`, { headers: apiHeaders(token) });
+    const wfs = await wfResp.json();
+    const wf = wfs.workflows.find(w => w.name.includes('检测'));
+    if (!wf) throw new Error('未找到检测工作流');
+    const resp = await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
+      method: 'POST',
+      headers: { ...apiHeaders(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main' })
+    });
+    if (resp.status !== 204) throw new Error(`触发失败 (${resp.status})`);
+    showStatus($('statusTest'), 'success', '✓ 已触发！约1-2分钟后查看手机 Bark 通知');
+    toast('已触发检测');
+  } catch(e) {
+    showStatus($('statusTest'), 'error', '✗ 触发失败：' + e.message);
+  } finally {
+    setLoading($('btnTest'), false);
+  }
 });
 </script>
 </body>
