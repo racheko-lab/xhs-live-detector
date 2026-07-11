@@ -293,7 +293,14 @@ def check_once(cfg):
     log.info("HTML前300字符: %s", html[:300])
     if "liveStream" in html:
         idx = html.find("liveStream")
-        log.info("liveStream附近内容: %s", html[idx:idx+500])
+        log.info("liveStream完整内容: %s", html[idx:idx+2000])
+    # 搜索HTML里是否有其他位置包含真实room数据
+    import re as _re
+    # 搜索 anchor 相关信息
+    for kw in ["host_nickname", "郑知恩", "roomTitle", "flvUrl", "roomId\":", "liveStatus"]:
+        if kw in html:
+            idx = html.find(kw)
+            log.info("找到[%s]在位置%d: %s", kw, idx, html[idx:idx+150])
 
     nickname = "小红书用户"
     living = False
