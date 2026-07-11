@@ -1,5 +1,13 @@
 {
   "living": false,
   "last_notify_time": 0,
-  "last_check": "2026-07-11 02:32:57"
+  "last_check": "2026-07-11 02:43:05",
+  "users": {
+    "https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01": {
+      "living": false,
+      "last_notify_time": 0,
+      "last_check": "2026-07-11 02:43:05",
+      "nickname": "郑知恩"
+    }
+  }
 }
