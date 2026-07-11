@@ -17,9 +17,6 @@
   --border: #E5E6EB;
   --green: #00B42A;
   --blue: #165DFF;
-  --orange: #FF7D00;
-  --radius: 16px;
-  --tab-h: 56px;
 }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
@@ -27,12 +24,11 @@ body {
   color: var(--text);
   font-size: 14px;
   line-height: 1.5;
-  padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px));
 }
 .nav {
   background: linear-gradient(135deg, var(--red), #FF6B7A);
   color: white;
-  padding: 44px 20px 20px;
+  padding: 48px 20px 28px;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -42,122 +38,112 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-.nav h1 { font-size: 20px; font-weight: 600; }
+.nav h1 { font-size: 22px; font-weight: 600; }
 .refresh-btn {
   background: rgba(255,255,255,0.25);
   border: none;
   color: white;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .refresh-btn:active { background: rgba(255,255,255,0.35); }
 .refresh-btn.loading { pointer-events: none; opacity: 0.7; }
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.nav p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
-.container {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 14px;
-}
-.page { display: none; }
-.page.active { display: block; }
+.nav p { font-size: 13px; opacity: 0.9; margin-top: 6px; }
+.container { max-width: 560px; margin: 0 auto; padding: 16px; }
 .card {
   background: var(--card);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 .card-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .card-title .small { font-size: 12px; font-weight: normal; color: var(--text-2); }
 .status-card {
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 14px;
+  margin-bottom: 12px;
 }
 .status-card.running { background: linear-gradient(135deg, #E8F3FF 0%, #D4E8FF 100%); }
 .status-card.live { background: linear-gradient(135deg, #FFECE8 0%, #FFD8D0 100%); }
 .status-icon {
-  width: 40px; height: 40px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
+  font-size: 24px; flex-shrink: 0;
 }
 .status-card.running .status-icon { background: var(--blue); color: white; }
 .status-card.live .status-icon { background: var(--red); color: white; }
-.status-text h3 { font-size: 14px; margin-bottom: 2px; }
-.status-text p { font-size: 11px; opacity: 0.8; }
+.status-text h3 { font-size: 16px; margin-bottom: 3px; }
+.status-text p { font-size: 12px; opacity: 0.8; }
 .anchor-row {
   display: flex;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
 .anchor-row:last-child { border-bottom: none; padding-bottom: 0; }
 .anchor-row:first-child { padding-top: 0; }
 .avatar {
-  width: 42px; height: 42px;
+  width: 46px; height: 46px;
   background: var(--red-light);
   color: var(--red);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; font-weight: 600;
+  font-size: 18px; font-weight: 600;
   flex-shrink: 0;
-  margin-right: 11px;
+  margin-right: 13px;
 }
 .avatar.live {
   background: var(--red);
   color: white;
-  box-shadow: 0 0 0 4px rgba(255,36,66,0.15);
+  box-shadow: 0 0 0 5px rgba(255,36,66,0.15);
 }
 .anchor-info { flex: 1; min-width: 0; }
 .anchor-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
 }
 .anchor-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-2);
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 4px;
 }
 .badge {
   display: inline-block;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
   font-weight: 500;
 }
 .badge-live { background: var(--red); color: white; animation: pulse 1.5s infinite; }
 .badge-off { background: #F2F3F5; color: var(--text-2); }
-.badge-check { background: #E8F3FF; color: var(--blue); }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
 .dot-live {
-  width: 8px; height: 8px;
+  width: 9px; height: 9px;
   background: var(--red);
   border-radius: 50%;
   display: inline-block;
@@ -167,154 +153,46 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 14px;
 }
 .info-item:last-child { border-bottom: none; padding-bottom: 0; }
 .info-item:first-child { padding-top: 0; }
 .info-item .label { color: var(--text-2); }
-.info-item .value { font-weight: 500; font-size: 13px; }
+.info-item .value { font-weight: 500; }
 .btn {
   width: 100%;
-  padding: 11px;
+  padding: 13px;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
-  -webkit-appearance: none;
+  text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  text-decoration: none;
+  color: inherit;
 }
 .btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--red); color: white; }
 .btn-secondary { background: #F2F3F5; color: var(--text); }
-.btn + .btn { margin-top: 7px; }
-.tabs {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: var(--tab-h);
-  background: white;
-  border-top: 1px solid var(--border);
-  display: flex;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  z-index: 100;
-}
-.tab {
-  flex: 1;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 2px;
-  color: var(--text-2);
-  font-size: 11px;
-  cursor: pointer;
-  padding-top: 5px;
-}
-.tab.active { color: var(--red); }
-.tab-icon { font-size: 20px; line-height: 1; }
-.input-group { margin-bottom: 12px; }
-.input-group:last-child { margin-bottom: 0; }
-.input-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text);
-  margin-bottom: 5px;
-  display: block;
-}
-.input-hint {
-  font-size: 11px;
-  color: var(--text-2);
-  margin-top: 4px;
-  line-height: 1.4;
-}
-input, textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  font-size: 13px;
-  font-family: inherit;
-  background: #FAFAFA;
-  transition: all 0.2s;
-  -webkit-appearance: none;
-}
-input:focus, textarea:focus {
-  outline: none;
-  border-color: var(--red);
-  background: white;
-}
-textarea { min-height: 60px; resize: vertical; }
-.anchor-edit {
-  background: #FAFBFC;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  position: relative;
-}
-.anchor-edit .del-btn {
-  position: absolute;
-  top: 8px; right: 8px;
-  width: 26px; height: 26px;
-  background: #FFF1F0;
-  color: var(--red);
-  border: none;
-  border-radius: 50%;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.anchor-edit .input-group { margin-bottom: 8px; }
-.btn-add {
-  background: var(--red-light);
-  color: var(--red);
-  border: 1.5px dashed var(--red);
-  font-weight: 500;
-  font-size: 13px;
-  padding: 10px;
-}
-.status-msg {
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 9px;
-  font-size: 12px;
-  display: none;
-}
-.status-msg.show { display: block; }
-.status-msg.success { background: #E8FFEA; color: #008020; }
-.status-msg.error { background: #FFECE8; color: #CB2634; }
-.status-msg.loading { background: #E8F3FF; color: var(--blue); }
 .notice {
-  background: #FFFBE6;
-  border: 1px solid #FFE58F;
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 12px;
+  background: linear-gradient(135deg, #FFFBE6 0%, #FFF7CC 100%);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
   color: #8A6D00;
-  line-height: 1.5;
-  margin-bottom: 10px;
+  line-height: 1.6;
+  margin-bottom: 12px;
 }
-.empty-hint {
+.footer {
   text-align: center;
   color: var(--text-3);
   font-size: 12px;
-  padding: 20px;
-}
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 14px 0;
-}
-.section-title {
-  font-size: 12px;
-  color: var(--text-2);
-  margin-bottom: 8px;
-  font-weight: 500;
+  margin-top: 20px;
+  line-height: 1.6;
 }
 </style>
 </head>
@@ -322,148 +200,74 @@ textarea { min-height: 60px; resize: vertical; }
 <div class="nav">
   <div class="nav-top">
     <h1>📺 小红书开播监控</h1>
-    <button class="refresh-btn" id="btnRefresh" onclick="refreshStatus()">
+    <button class="refresh-btn" id="btnRefresh" onclick="refresh()">
       <span id="refreshIcon">🔄</span>
       <span id="refreshText">刷新</span>
     </button>
   </div>
-  <p id="lastCheck">正在加载状态...</p>
+  <p id="subTitle">正在加载状态...</p>
 </div>
 
 <div class="container">
-  <!-- 状态页 -->
-  <div class="page active" id="page-status">
-    <div id="statusHeader"></div>
-    <div class="card">
-      <div class="card-title">
-        <span>👤 主播状态</span>
-        <span class="small" id="anchorCount"></span>
-      </div>
-      <div id="anchorListStatus">
-        <div class="empty-hint">加载中...</div>
-      </div>
+  <div id="statusHeader"></div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>👤 主播状态</span>
+      <span class="small" id="countText"></span>
     </div>
-    <div class="card">
-      <div class="card-title">ℹ️ 运行信息</div>
-      <div class="info-item">
-        <span class="label">检测频率</span>
-        <span class="value">每 10 分钟</span>
-      </div>
-      <div class="info-item">
-        <span class="label">推送方式</span>
-        <span class="value" style="color:var(--green)">✓ Bark</span>
-      </div>
-      <div class="info-item">
-        <span class="label">仓库</span>
-        <span class="value">racheko-lab/xhs-live-detector</span>
-      </div>
-    </div>
-    <a href="https://github.com/racheko-lab/xhs-live-detector/actions" target="_blank" class="btn btn-secondary">
-      📋 查看 GitHub 运行日志
-    </a>
+    <div id="anchorList"></div>
   </div>
 
-  <!-- 设置页 -->
-  <div class="page" id="page-config">
-    <div class="notice">
-      💡 <b>默认配置已生效，不需要修改！</b><br/>
-      下方可以直接添加/删除主播，保存时再填 Token 即可。
+  <div class="card">
+    <div class="card-title">ℹ️ 运行信息</div>
+    <div class="info-item">
+      <span class="label">检测频率</span>
+      <span class="value">每 10 分钟</span>
     </div>
-
-    <div class="card">
-      <div class="card-title">👤 监控主播</div>
-      <div id="anchorListEdit"></div>
-      <button class="btn btn-add" onclick="addAnchor()">+ 添加主播</button>
+    <div class="info-item">
+      <span class="label">推送方式</span>
+      <span class="value" style="color:var(--green)">✓ Bark 推送</span>
     </div>
-
-    <div class="card">
-      <div class="card-title">🔔 Bark 配置</div>
-      <div class="input-group">
-        <label class="input-label">Bark Key</label>
-        <input type="text" id="barkKey" placeholder="Bark App 首页顶部的字符串" autocomplete="off" />
-      </div>
-      <div class="input-group">
-        <label class="input-label">Bark 服务器</label>
-        <input type="text" id="barkServer" value="https://api.day.app" />
-      </div>
-      <div class="input-group">
-        <label class="input-label">小红书 Cookie（选填）</label>
-        <textarea id="xhsCookie" placeholder="登录小红书网页版后 F12 复制 Cookie，提高检测准确率"></textarea>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🔑 GitHub Token</div>
-      <div class="input-group">
-        <input type="password" id="ghToken" placeholder="ghp_xxxxxx，需要 repo 权限，仅保存时需要" autocomplete="off" />
-        <div class="input-hint">
-          创建：github.com/settings/tokens/new → 勾选 repo 权限<br/>
-          Token 仅在本地浏览器加密使用，不会存储
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置到 GitHub</button>
-      <button class="btn btn-secondary" onclick="triggerTest()" style="margin-top:7px">▶️ 立即触发一次检测</button>
-      <div class="status-msg" id="statusMsg"></div>
+    <div class="info-item">
+      <span class="label">运行方式</span>
+      <span class="value">GitHub Actions 云端</span>
     </div>
   </div>
-</div>
 
-<!-- 底部Tab栏 -->
-<div class="tabs">
-  <div class="tab active" data-page="page-status" onclick="switchTab(this)">
-    <div class="tab-icon">📊</div>
-    <div>状态</div>
+  <div class="notice">
+    💡 <b>要添加新主播/修改配置？</b><br/>
+    直接把主播主页链接发给我就行，我帮你配置好，你只需要看这个页面等开播通知～
   </div>
-  <div class="tab" data-page="page-config" onclick="switchTab(this)">
-    <div class="tab-icon">⚙️</div>
-    <div>设置</div>
+
+  <a href="https://github.com/racheko-lab/xhs-live-detector/actions" target="_blank" class="btn btn-secondary">
+    📋 查看 GitHub 运行日志
+  </a>
+
+  <div class="footer">
+    开播/下播都会自动推送 Bark 通知<br/>
+    点击右上角「刷新」查看最新状态
   </div>
 </div>
 
 <script>
 const REPO = 'racheko-lab/xhs-live-detector';
 const RAW = `https://raw.githubusercontent.com/${REPO}/main`;
-const API = `https://api.github.com/repos/${REPO}`;
 const $ = id => document.getElementById(id);
-let anchorsCache = [];
 
-function switchTab(el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  $(el.dataset.page).classList.add('active');
-}
-
-// ============ 状态页逻辑 ============
-async function refreshStatus() {
+async function refresh() {
   const btn = $('btnRefresh');
   btn.classList.add('loading');
   $('refreshIcon').className = 'spin';
   $('refreshText').innerText = '检测中';
   try {
     const resp = await fetch(RAW + '/state.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!resp.ok) throw new Error('无法获取状态');
+    if (!resp.ok) throw new Error('加载失败');
     const state = await resp.json();
-    renderStatus(state);
+    render(state);
   } catch(e) {
-    $('statusHeader').innerHTML = `
-      <div class="status-card running">
-        <div class="status-icon">⏱️</div>
-        <div class="status-text">
-          <h3>监控运行中</h3>
-          <p>每 10 分钟自动检测一次</p>
-        </div>
-      </div>`;
-    $('anchorListStatus').innerHTML = `
-      <div class="anchor-row">
-        <div class="avatar">郑</div>
-        <div class="anchor-info">
-          <div class="anchor-name">郑知恩 <span class="badge badge-check">监控中</span></div>
-          <div class="anchor-meta">小红书主页</div>
-        </div>
-      </div>`;
-    $('anchorCount').innerText = '1 位主播';
-    $('lastCheck').innerText = '已启动，等待首次检测结果...';
+    render({ users: { default: { name: '郑知恩', is_live: false, note: '监控中' } }, last_check: '-' });
+    $('subTitle').innerText = '已启动，等待检测结果...';
   } finally {
     btn.classList.remove('loading');
     $('refreshIcon').className = '';
@@ -472,10 +276,10 @@ async function refreshStatus() {
   }
 }
 
-function renderStatus(state) {
+function render(state) {
   const users = state.users || {};
   const list = Object.values(users);
-  const liveCount = list.filter(u => u.is_live).length;
+  const liveCount = list.filter(u => u.is_live || u.living).length;
   const checkTime = state.last_check ? new Date(state.last_check).toLocaleString('zh-CN') : '-';
 
   if (liveCount > 0) {
@@ -483,7 +287,7 @@ function renderStatus(state) {
       <div class="status-card live">
         <div class="status-icon">🔴</div>
         <div class="status-text">
-          <h3>有 ${liveCount} 位主播正在直播！</h3>
+          <h3 style="color:#CB2634">有 ${liveCount} 位主播正在直播！</h3>
           <p>最后检测：${checkTime}</p>
         </div>
       </div>`;
@@ -492,29 +296,33 @@ function renderStatus(state) {
       <div class="status-card running">
         <div class="status-icon">⏱️</div>
         <div class="status-text">
-          <h3>监控运行中，暂无主播开播</h3>
+          <h3 style="color:var(--blue)">监控运行中</h3>
           <p>最后检测：${checkTime}</p>
         </div>
       </div>`;
   }
 
-  $('anchorCount').innerText = `${list.length} 位主播`;
+  $('countText').innerText = `${list.length} 位主播`;
+  $('subTitle').innerText = `最后检测：${checkTime} · 监控 ${list.length} 位主播`;
+
   if (list.length === 0) {
-    $('anchorListStatus').innerHTML = '<div class="empty-hint">暂无监控主播，去设置页添加</div>';
+    $('anchorList').innerHTML = '<div style="text-align:center;color:var(--text-3);padding:20px">暂无监控主播</div>';
   } else {
-    $('anchorListStatus').innerHTML = list.map(u => {
-      const firstChar = (u.name || '?')[0];
-      if (u.is_live) {
+    $('anchorList').innerHTML = list.map(u => {
+      const living = u.is_live || u.living;
+      const firstChar = (u.name || u.nickname || '?')[0];
+      const note = u.note || (living ? '正在直播' : '监控中');
+      if (living) {
         return `
         <div class="anchor-row">
           <div class="avatar live">${firstChar}</div>
           <div class="anchor-info">
             <div class="anchor-name">
               <span class="dot-live"></span>
-              ${u.name || '主播'}
+              ${u.name || u.nickname || '主播'}
               <span class="badge badge-live">直播中</span>
             </div>
-            <div class="anchor-meta">${u.note || '正在直播'}</div>
+            <div class="anchor-meta">${note}</div>
           </div>
         </div>`;
       } else {
@@ -523,171 +331,19 @@ function renderStatus(state) {
           <div class="avatar">${firstChar}</div>
           <div class="anchor-info">
             <div class="anchor-name">
-              ${u.name || '主播'}
+              ${u.name || u.nickname || '主播'}
               <span class="badge badge-off">未开播</span>
             </div>
-            <div class="anchor-meta">${u.note || '监控中'}</div>
+            <div class="anchor-meta">${note}</div>
           </div>
         </div>`;
       }
     }).join('');
   }
-  $('lastCheck').innerText = `最后检测：${checkTime} · 共监控 ${list.length} 位主播`;
 }
 
-// ============ 设置页逻辑 ============
-function createAnchorEdit(name='', url='') {
-  const div = document.createElement('div');
-  div.className = 'anchor-edit';
-  div.innerHTML = `
-    <button class="del-btn" onclick="this.parentElement.remove()">×</button>
-    <div class="input-group">
-      <label class="input-label">主播备注名</label>
-      <input type="text" class="a-name" placeholder="例如：郑知恩" value="${name.replace(/"/g,'&quot;')}" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">主页链接</label>
-      <input type="url" class="a-url" placeholder="小红书主页链接或 xhslink 短链" value="${url.replace(/"/g,'&quot;')}" />
-    </div>`;
-  return div;
-}
-
-function addAnchor() {
-  $('anchorListEdit').appendChild(createAnchorEdit());
-}
-
-function getAnchorsFromForm() {
-  return Array.from(document.querySelectorAll('.anchor-edit')).map(item => ({
-    name: item.querySelector('.a-name').value.trim() || '主播',
-    url: item.querySelector('.a-url').value.trim()
-  })).filter(a => a.url);
-}
-
-function showMsg(type, msg) {
-  const el = $('statusMsg');
-  el.className = 'status-msg show ' + type;
-  el.innerHTML = msg;
-}
-
-function getToken() {
-  const t = $('ghToken').value.trim();
-  if (!t) { alert('请填写 GitHub Token（只需要填一次，浏览器会记住）'); return null; }
-  localStorage.setItem('xhs_gh_token', t);
-  return t;
-}
-
-async function loadSodium() {
-  if (window.sodium && window.sodium.ready) {
-    await window.sodium.ready;
-    return window.sodium;
-  }
-  const cdnList = [
-    'https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js',
-    'https://unpkg.com/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js'
-  ];
-  for (const src of cdnList) {
-    try {
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = res;
-        s.onerror = rej;
-        s.async = true;
-        document.head.appendChild(s);
-      });
-      if (window.sodium) {
-        await window.sodium.ready;
-        return window.sodium;
-      }
-    } catch(e) {
-      continue;
-    }
-  }
-  throw new Error('加密库加载失败，请检查网络连接');
-}
-
-async function putSecret(token, name, value) {
-  const sodium = await loadSodium();
-  const keyResp = await fetch(`${API}/actions/secrets/public-key`, {
-    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'xhs' }
-  });
-  const pub = await keyResp.json();
-  const binKey = sodium.from_base64(pub.key, sodium.base64_variants.ORIGINAL);
-  const enc = sodium.crypto_box_seal(sodium.from_string(value), binKey);
-  const encB64 = sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
-  const resp = await fetch(`${API}/actions/secrets/${name}`, {
-    method: 'PUT',
-    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'xhs' },
-    body: JSON.stringify({ encrypted_value: encB64, key_id: pub.key_id })
-  });
-  if (!resp.ok) throw new Error(`保存失败 (${resp.status})`);
-}
-
-async function saveConfig() {
-  const token = getToken();
-  if (!token) return;
-  const anchors = getAnchorsFromForm();
-  if (anchors.length === 0) return alert('请至少添加一个主播');
-  const barkKey = $('barkKey').value.trim();
-  if (!barkKey) return alert('请填写 Bark Key');
-  const barkServer = $('barkServer').value.trim() || 'https://api.day.app';
-  const cookie = $('xhsCookie').value.trim();
-
-  showMsg('loading', '正在保存配置...');
-  try {
-    const toSave = { XHS_USERS: JSON.stringify(anchors), BARK_KEY: barkKey, BARK_SERVER: barkServer };
-    if (cookie) toSave.XHS_COOKIE = cookie;
-    let i = 0;
-    for (const [k, v] of Object.entries(toSave)) {
-      await putSecret(token, k, v);
-      showMsg('loading', `保存中 ${++i}/${Object.keys(toSave).length}...`);
-    }
-    showMsg('success', '🎉 配置保存成功！约1分钟后生效，可点击「立即触发一次检测」测试');
-  } catch(e) {
-    showMsg('error', '✗ 保存失败：' + e.message);
-  }
-}
-
-async function triggerTest() {
-  const token = getToken();
-  if (!token) return;
-  showMsg('loading', '正在触发检测...');
-  try {
-    const wfResp = await fetch(`${API}/actions/workflows`, {
-      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'xhs' }
-    });
-    const wf = (await wfResp.json()).workflows.find(w => w.name.includes('检测'));
-    const resp = await fetch(`${API}/actions/workflows/${wf.id}/dispatches`, {
-      method: 'POST',
-      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'xhs' },
-      body: JSON.stringify({ ref: 'main' })
-    });
-    if (resp.status !== 204) throw new Error(`触发失败 (${resp.status})`);
-    showMsg('success', '✓ 已触发！约1-2分钟后查看手机 Bark 通知，也可点刷新看状态');
-  } catch(e) {
-    showMsg('error', '✗ ' + e.message);
-  }
-}
-
-// 初始化
-function init() {
-  // 默认添加郑知恩
-  $('anchorListEdit').appendChild(createAnchorEdit('郑知恩', 'https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01'));
-  $('barkKey').value = 'xbFcoBdVRSEgAJjuH8c3GS';
-  // 自动填充已保存的Token
-  const savedToken = localStorage.getItem('xhs_gh_token');
-  if (savedToken) {
-    $('ghToken').value = savedToken;
-  }
-  // 更新提示文字
-  const hint = document.querySelector('.input-hint');
-  if (savedToken) {
-    hint.innerHTML = '✓ Token已自动填充，浏览器已记住，保存时直接点击即可';
-  }
-  // 加载状态
-  refreshStatus();
-}
-init();
+refresh();
+setInterval(refresh, 5 * 60 * 1000);
 </script>
 </body>
 </html>
