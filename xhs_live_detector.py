@@ -328,7 +328,9 @@ def main():
         try:
             run_once(cfg)
         except Exception as e:
+            import traceback
             log.error("检测异常: %s", e)
+            log.error("完整堆栈:\n%s", traceback.format_exc())
             sys.exit(1)
         return
 
