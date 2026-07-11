@@ -128,14 +128,9 @@ def _get_headers(ua, cookie):
         "xy-common-params": "platform=iOS&sid=session.1722166379345546829388",
         "Referer": "https://app.xhs.cn/",
     }
-    if cookie:
+    # cookie 含中文占位符或非 latin-1 字符时不发送(避免编码错误)
+    if cookie and cookie.isascii():
         headers["Cookie"] = cookie
-    # 调试:确认所有 header 值都是 ASCII
-    for k, v in headers.items():
-        try:
-            v.encode("ascii")
-        except UnicodeEncodeError as e:
-            log.warning("header[%s] 含非ASCII字符: %s (位置 %s)", k, repr(v), e)
     return headers
 
 def _resolve_short_url(url, headers, timeout):
