@@ -133,63 +133,50 @@ def _get_headers(ua, cookie):
     return headers
 
 def _resolve_short_url(url, headers, timeout):
-    """xhslink 短链:跟随重定向拿最终 URL(不取 body)"""
+    """xhslink 短链:跟随重定向拿最终 URL(用 urllib,兼容性好)"""
     if "xhslink.com" not in url:
         return url
+    import urllib.request, ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    req = urllib.request.Request(url, headers=headers)
+    opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx))
     try:
-        import httpx
-        with httpx.Client(follow_redirects=True, timeout=timeout, verify=False) as c:
-            r = c.get(url, headers=headers)
-            final = str(r.url)
-            log.info("短链解析: %s -> %s", url[:40], final[:80])
-            return final
-    except ImportError:
-        # httpx 不可用时,用 http.client 跟一次重定向
-        import http.client, ssl
-        from urllib.parse import urlparse
-        p = urlparse(url)
-        ctx = ssl.create_default_context()
-        conn = http.client.HTTPSConnection(p.netloc, timeout=timeout, context=ctx)
+        # 不跟随重定向,只拿 Location
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        opener2 = urllib.request.build_opener(NoRedirect, urllib.request.HTTPSHandler(context=ctx))
         try:
-            conn.request("GET", p.path or "/", headers={**headers, "Host": p.netloc})
-            resp = conn.getresponse()
-            loc = resp.getheader("Location", "")
+            opener2.open(req, timeout=timeout)
+            return url  # 没重定向
+        except urllib.error.HTTPError as e:
+            loc = e.headers.get("Location", "")
             if loc:
-                log.info("短链(无httpx)%s → %s", url[:40], loc[:80])
+                log.info("短链解析: %s -> %s", url[:40], loc[:80])
                 return loc
             return url
-        finally:
-            conn.close()
+    except Exception as e:
+        log.warning("短链解析失败: %s", e)
+        return url
 
 def fetch_page(url, cookie, ua, timeout):
     """抓取小红书页面 HTML。xhslink短链先解析最终URL再请求(参考streamget实现)。"""
     headers = _get_headers(ua, cookie)
-    # 关键:xhslink 短链必须先跟重定向拿到最终URL,再请求最终URL拿HTML
     final_url = _resolve_short_url(url, headers, timeout)
-    try:
-        import httpx
-        with httpx.Client(timeout=timeout, verify=False) as c:
-            r = c.get(final_url, headers=headers)
-            r.raise_for_status()
-            return r.text
-    except ImportError:
-        # 降级:http.client
-        import http.client, ssl
-        from urllib.parse import urlparse
-        p = urlparse(final_url)
-        ctx = ssl.create_default_context()
-        conn = http.client.HTTPSConnection(p.netloc, timeout=timeout, context=ctx)
-        try:
-            conn.request("GET", (p.path or "/") + ("?" + p.query if p.query else ""), headers={**headers, "Host": p.netloc})
-            resp = conn.getresponse()
-            data = resp.read()
-            ctype = resp.getheader("Content-Type", "")
-            charset = "utf-8"
-            if "charset=" in ctype:
-                charset = ctype.split("charset=")[-1].split(";")[0].strip()
-            return data.decode(charset, errors="replace")
-        finally:
-            conn.close()
+    import urllib.request, ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    req = urllib.request.Request(final_url, headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+        data = resp.read()
+        ctype = resp.headers.get("Content-Type", "")
+        charset = "utf-8"
+        if "charset=" in ctype:
+            charset = ctype.split("charset=")[-1].split(";")[0].strip()
+        return data.decode(charset, errors="replace")
 
 
 def extract_initial_state(html):
