@@ -571,20 +571,39 @@ function showMsg(type, msg) {
 
 function getToken() {
   const t = $('ghToken').value.trim();
-  if (!t) { alert('请先填写 GitHub Token'); return null; }
+  if (!t) { alert('请填写 GitHub Token（只需要填一次，浏览器会记住）'); return null; }
+  localStorage.setItem('xhs_gh_token', t);
   return t;
 }
 
 async function loadSodium() {
-  if (window.sodium) { await window.sodium.ready; return window.sodium; }
-  await new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = 'libsodium.js';
-    s.onload = res; s.onerror = rej; s.async = true;
-    document.head.appendChild(s);
-  });
-  await window.sodium.ready;
-  return window.sodium;
+  if (window.sodium && window.sodium.ready) {
+    await window.sodium.ready;
+    return window.sodium;
+  }
+  const cdnList = [
+    'https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js',
+    'https://unpkg.com/libsodium-wrappers@0.7.15/dist/modules/libsodium-wrappers.min.js'
+  ];
+  for (const src of cdnList) {
+    try {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = res;
+        s.onerror = rej;
+        s.async = true;
+        document.head.appendChild(s);
+      });
+      if (window.sodium) {
+        await window.sodium.ready;
+        return window.sodium;
+      }
+    } catch(e) {
+      continue;
+    }
+  }
+  throw new Error('加密库加载失败，请检查网络连接');
 }
 
 async function putSecret(token, name, value) {
@@ -655,6 +674,16 @@ function init() {
   // 默认添加郑知恩
   $('anchorListEdit').appendChild(createAnchorEdit('郑知恩', 'https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01'));
   $('barkKey').value = 'xbFcoBdVRSEgAJjuH8c3GS';
+  // 自动填充已保存的Token
+  const savedToken = localStorage.getItem('xhs_gh_token');
+  if (savedToken) {
+    $('ghToken').value = savedToken;
+  }
+  // 更新提示文字
+  const hint = document.querySelector('.input-hint');
+  if (savedToken) {
+    hint.innerHTML = '✓ Token已自动填充，浏览器已记住，保存时直接点击即可';
+  }
   // 加载状态
   refreshStatus();
 }
