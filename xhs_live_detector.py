@@ -36,10 +36,7 @@ DEFAULT_CONFIG = {
     "remind_interval_seconds": 3600,
     "state_file": "state.json",
     "request_timeout": 15,
-    "user_agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    ),
+    "user_agent": "ios/7.830 (ios 17.0; ; iPhone 15 (A2846/A3089/A3089/A3090/A3092))",
 }
 
 logging.basicConfig(
@@ -125,8 +122,8 @@ def _safe_header(val):
     from urllib.parse import quote
     return quote(s, safe="=:;,/!?@&=+$()*'\"")
 
-def fetch_page(url, cookie, ua, timeout):
-    """用 http.client 直接请求,避免 urllib/requests 对非 latin-1 header 的处理问题"""
+def _do_request(url, headers, timeout):
+    """用 http.client 请求,返回 (最终URL, body)。自动跟随一次重定向(xhslink短链)。"""
     import http.client
     import ssl
     from urllib.parse import urlparse
@@ -137,20 +134,16 @@ def fetch_page(url, cookie, ua, timeout):
         path += "?" + p.query
     ctx = ssl.create_default_context()
     conn = http.client.HTTPSConnection(host, timeout=timeout, context=ctx)
-    headers = {
-        "User-Agent": _safe_header(ua),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9",
-        "Referer": "https://www.xiaohongshu.com/",
-        "Host": host,
-    }
-    if cookie:
-        headers["Cookie"] = _safe_header(cookie)
     try:
-        conn.request("GET", path, headers=headers)
+        conn.request("GET", path, headers={**headers, "Host": host})
         resp = conn.getresponse()
+        # 处理重定向(302/301,xhslink 短链会跳转)
+        if resp.status in (301, 302, 303, 307, 308):
+            location = resp.getheader("Location", "")
+            if location:
+                conn.close()
+                return _do_request(location, headers, timeout)
         data = resp.read()
-        # 从 Content-Type 取 charset
         charset = "utf-8"
         ctype = resp.getheader("Content-Type", "")
         if "charset=" in ctype:
@@ -158,9 +151,23 @@ def fetch_page(url, cookie, ua, timeout):
         body = data.decode(charset, errors="replace")
         if resp.status >= 400:
             raise Exception(f"HTTP {resp.status}: {body[:500]}")
-        return body
+        return url, body
     finally:
         conn.close()
+
+def fetch_page(url, cookie, ua, timeout):
+    """抓取小红书页面 HTML。伪装 iOS App UA 才能拿到 liveStream 字段。"""
+    headers = {
+        "User-Agent": _safe_header(ua),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "xy-common-params": "platform=iOS&sid=session.1722166379345546829388",
+        "Referer": "https://app.xhs.cn/",
+    }
+    if cookie:
+        headers["Cookie"] = _safe_header(cookie)
+    _, body = _do_request(url, headers, timeout)
+    return body
 
 
 def extract_initial_state(html):
@@ -189,57 +196,34 @@ def extract_initial_state(html):
             return None
 
 
-# 可能表示「正在直播」的字段名(小写匹配)
-LIVE_KEYS = {
-    "livestatus", "livestatusinfo", "liveinfo", "isliving", "islive",
-    "living", "live", "live_room_id", "livestreamstatus",
-    "is_living", "live_status", "live_status_info", "livestreamid", "liveid",
-}
-# 字段值为这些时视为「正在直播」
-LIVE_TRUE_VALUES = {True, 1, "1", "true", "True", "living", "live", "进行中", "直播中"}
-
-
-def find_live_info(obj):
-    """递归搜索对象中的直播状态字段。返回 (是否直播中, 直播信息dict)"""
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            kl = k.lower()
-            if kl in LIVE_KEYS:
-                # 标量值表示正在直播(用 isinstance 守卫,避免 list/dict 进 set 报错)
-                if isinstance(v, (bool, int, str)) and (
-                    v in LIVE_TRUE_VALUES
-                    or (isinstance(v, str) and v.lower() in ("live", "living", "true", "1"))
-                ):
-                    return True, obj
-                # 直播间 id 有值 -> 视为直播中
-                if isinstance(v, (bool, int, str)) and kl in ("live_room_id", "livestreamid", "liveid") and v not in (None, "", 0, "0"):
-                    return True, {"room_id": v}
-                # value 是 dict 时,交给下方递归判断内部字段,不直接认定为直播
-        for v in obj.values():
-            living, info = find_live_info(v)
-            if living:
-                return True, info
-    elif isinstance(obj, list):
-        for v in obj:
-            living, info = find_live_info(v)
-            if living:
-                return True, info
-    return False, None
-
-
-def check_live_by_keywords(html):
-    """结构化解析失败时的关键词兜底检测"""
-    patterns = [
-        r'"liveStatus"\s*:\s*1',
-        r'"isLiving"\s*:\s*true',
-        r'"living"\s*:\s*true',
-        r'"live_room_id"\s*:\s*"[^"]+"',
-        r'直播中',
-    ]
-    for p in patterns:
-        if re.search(p, html):
-            return True
-    return False
+def find_live_info(state):
+    """
+    精确判断直播状态(参考 DouyinLiveRecorder/streamget 的实现)。
+    三重条件:liveStream 存在 + liveStatus==success + 标题不含"回放"
+    返回 (是否直播中, 直播信息dict)
+    """
+    if not isinstance(state, dict):
+        return False, None
+    live_stream = state.get("liveStream")
+    if not live_stream or not isinstance(live_stream, dict):
+        return False, None
+    if live_stream.get("liveStatus") != "success":
+        return False, None
+    try:
+        room_info = live_stream.get("roomData", {}).get("roomInfo", {})
+        title = room_info.get("roomTitle", "")
+        if not title or "回放" in title:
+            return False, None
+        # 从 deeplink 提取主播名
+        deeplink = room_info.get("deeplink", "")
+        anchor = ""
+        if "host_nickname=" in deeplink:
+            anchor = deeplink.split("host_nickname=")[-1].split("&")[0]
+            from urllib.parse import unquote
+            anchor = unquote(anchor)
+        return True, {"title": title, "anchor": anchor, "room_id": room_info.get("roomId", "")}
+    except Exception:
+        return False, None
 
 
 def extract_nickname(state):
@@ -298,8 +282,8 @@ def check_once(cfg):
     if state:
         nickname = extract_nickname(state)
         living, live_info = find_live_info(state)
-    if not living:
-        living = check_live_by_keywords(html)
+        if living and live_info and live_info.get("anchor"):
+            nickname = live_info["anchor"]
 
     return living, nickname, live_info
 
