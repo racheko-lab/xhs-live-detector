@@ -1,16 +1,24 @@
 {
   "living": false,
   "last_notify_time": 0,
-  "last_check": "2026-07-11 03:50:41",
+  "last_check": "2026-07-11 04:10:32",
   "users": {
     "https://www.xiaohongshu.com/user/profile/69fef32c0000000002001c01": {
       "living": false,
       "last_notify_time": 0,
-      "last_check": "2026-07-11 03:50:41",
+      "last_check": "2026-07-11 04:10:32",
       "nickname": "郑知恩",
       "is_live": false,
       "name": "郑知恩",
       "note": "监控中"
+    },
+    "https://www.xiaohongshu.com/user/profile/61a722f90000000010009b2d": {
+      "living": false,
+      "last_notify_time": 0,
+      "is_live": false,
+      "name": "葉好好",
+      "note": "监控中",
+      "last_check": "2026-07-11 04:10:32"
     }
   }
 }
