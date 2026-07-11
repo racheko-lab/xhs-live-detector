@@ -35,7 +35,7 @@ DEFAULT_CONFIG = {
     "remind_interval_seconds": 3600,
     "state_file": "state.json",
     "request_timeout": 15,
-    "user_agent": "ios/7.830 (ios 17.0; ; iPhone 15 (A2846/A3089/A3089/A3090/A3092))",
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
 }
 
 logging.basicConfig(
@@ -122,13 +122,13 @@ def _safe_header(val):
     return quote(s, safe="=:;,/!?@&=+$()*'\"")
 
 def _get_headers(ua, cookie):
-    """构造小红书 iOS App 请求头(参考 streamget/DouyinLiveRecorder)"""
+    """构造 iPhone Safari 网页版请求头"""
     headers = {
         "User-Agent": ua,
-        "xy-common-params": "platform=iOS&sid=session.1722166379345546829388",
-        "Referer": "https://app.xhs.cn/",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+        "Referer": "https://www.xiaohongshu.com/",
     }
-    # cookie 含中文占位符或非 latin-1 字符时不发送(避免编码错误)
     if cookie and cookie.isascii():
         headers["Cookie"] = cookie
     return headers
@@ -208,43 +208,54 @@ def extract_initial_state(html):
 
 def find_live_info(state):
     """
-    精确判断直播状态(参考 DouyinLiveRecorder/streamget 的实现)。
-    三重条件:liveStream 存在 + liveStatus==success + 标题不含"回放"
+    通过用户主页 SSR 的 widget 数据判断直播状态。
+    核心逻辑: profile.userInfo.userPageWidgetsInfo.normalWidgetList 中
+    businessType=="live" 的 widget,其 content 字段包含直播状态文案:
+      - "直播中" / "正在直播" → 开播
+      - "直播回顾" / 其他 → 未开播
     返回 (是否直播中, 直播信息dict)
     """
     if not isinstance(state, dict):
         return False, None
-    live_stream = state.get("liveStream")
-    if not live_stream or not isinstance(live_stream, dict):
-        return False, None
-    if live_stream.get("liveStatus") != "success":
-        return False, None
     try:
-        room_info = live_stream.get("roomData", {}).get("roomInfo", {})
-        title = room_info.get("roomTitle", "")
-        if not title or "回放" in title:
-            return False, None
-        # 从 deeplink 提取主播名
-        deeplink = room_info.get("deeplink", "")
-        anchor = ""
-        if "host_nickname=" in deeplink:
-            anchor = deeplink.split("host_nickname=")[-1].split("&")[0]
-            from urllib.parse import unquote
-            anchor = unquote(anchor)
-        return True, {"title": title, "anchor": anchor, "room_id": room_info.get("roomId", "")}
+        widgets = (
+            state.get("profile", {})
+            .get("userInfo", {})
+            .get("userPageWidgetsInfo", {})
+            .get("normalWidgetList", [])
+        )
+        for w in widgets:
+            if w.get("businessType") != "live":
+                continue
+            content_raw = w.get("widgetDataContent", "")
+            if not content_raw:
+                continue
+            try:
+                content_obj = json.loads(content_raw) if isinstance(content_raw, str) else content_raw
+            except Exception:
+                content_obj = {}
+            text = content_obj.get("content", "") or w.get("title", "") or ""
+            if "直播中" in text or "正在直播" in text:
+                return True, {"content": text, "title": text, "widget": w}
+            return False, {"content": text}
+        return False, None
     except Exception:
         return False, None
 
 
 def extract_nickname(state):
-    """尝试从 state 中提取用户昵称"""
+    """尝试多种路径提取主播昵称"""
     try:
+        # streamget 路径:user.userPageData.userInfo.nickname
         user = state.get("user", {})
-        info = (
-            user.get("userPageData", {}).get("userInfo", {})
-            or user.get("userInfo", {})
-        )
-        return info.get("nickname") or info.get("nickName") or "小红书用户"
+        ui = user.get("userPageData", {}).get("userInfo", {}) or user.get("userInfo", {})
+        if ui.get("nickname"):
+            return ui["nickname"]
+        # 网页版路径:profile.userInfo.nickname
+        pui = state.get("profile", {}).get("userInfo", {})
+        if pui.get("nickname"):
+            return pui["nickname"]
+        return "小红书用户"
     except Exception:
         return "小红书用户"
 
@@ -277,7 +288,7 @@ def send_bark(bark_server, bark_key, title, body, group="小红书开播"):
 
 # ---------- 主流程 ----------
 
-def check_once(cfg):
+def check_once(cfg, debug=False):
     url = cfg["xhs_user_url"]
     cookie = cfg.get("xhs_cookie", "")
     ua = cfg.get("user_agent")
@@ -285,22 +296,29 @@ def check_once(cfg):
 
     html = fetch_page(url, cookie, ua, timeout)
     state = extract_initial_state(html)
-    # 调试:输出关键信息定位问题
-    log.info("抓取HTML长度: %d", len(html))
-    log.info("含__INITIAL_STATE__: %s", "window.__INITIAL_STATE__" in html)
-    log.info("含liveStream字段: %s", "liveStream" in html)
-    log.info("含liveStatus字段: %s", "liveStatus" in html)
-    log.info("HTML前300字符: %s", html[:300])
-    if "liveStream" in html:
-        idx = html.find("liveStream")
-        log.info("liveStream完整内容: %s", html[idx:idx+2000])
-    # 搜索HTML里是否有其他位置包含真实room数据
-    import re as _re
-    # 搜索 anchor 相关信息
-    for kw in ["host_nickname", "郑知恩", "roomTitle", "flvUrl", "roomId\":", "liveStatus"]:
-        if kw in html:
-            idx = html.find(kw)
-            log.info("找到[%s]在位置%d: %s", kw, idx, html[idx:idx+150])
+
+    if debug:
+        log.info("===== DEBUG 诊断 =====")
+        log.info("HTML长度: %d", len(html))
+        log.info("含__INITIAL_STATE__: %s", "window.__INITIAL_STATE__" in html)
+        log.info("含'登录'(被跳登录页): %s", "website-login" in html or "fe-login" in html)
+        log.info("含'访问频繁'(被风控): %s", "访问频繁" in html or "error_code" in html)
+        log.info("含'直播': %s", "直播" in html)
+        log.info("含'liveStream': %s", "liveStream" in html)
+        log.info("含'直播中': %s", "直播中" in html)
+        log.info("含'正在直播': %s", "正在直播" in html)
+        log.info("含'businessType':'live': %s", '"businessType":"live"' in html)
+        # 输出 live widget 附近内容
+        if '"businessType":"live"' in html:
+            idx = html.find('"businessType":"live"')
+            log.info("live widget 片段: %s", html[max(0,idx-50):idx+400])
+        if state:
+            log.info("state 顶层 keys: %s", list(state.keys()))
+            # profile 路径
+            profile = state.get("profile", {})
+            ui = profile.get("userInfo", {})
+            log.info("profile.userInfo keys: %s", list(ui.keys()) if isinstance(ui,dict) else "空")
+            log.info("===== DEBUG END =====")
 
     nickname = "小红书用户"
     living = False
@@ -309,14 +327,13 @@ def check_once(cfg):
     if state:
         nickname = extract_nickname(state)
         living, live_info = find_live_info(state)
-        if living and live_info and live_info.get("anchor"):
-            nickname = live_info["anchor"]
-        log.info("state顶层keys: %s", list(state.keys()) if isinstance(state, dict) else "非dict")
+    else:
+        log.warning("未解析到 __INITIAL_STATE__,可能被反爬或需要登录 Cookie")
 
     return living, nickname, live_info
 
 
-def run_once(cfg):
+def run_once(cfg, debug=False):
     """执行一次检测 + 推送 + 状态持久化。返回当前是否直播中。"""
     remind_interval = int(cfg.get("remind_interval_seconds", 3600))
     state_file = cfg.get("state_file", "state.json")
@@ -324,9 +341,12 @@ def run_once(cfg):
     was_living = state.get("living", False)
     last_notify_time = state.get("last_notify_time", 0)
 
-    living, nickname, _ = check_once(cfg)
+    living, nickname, live_info = check_once(cfg, debug=debug)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log.info("[%s] %s 直播状态: %s", now, nickname, "直播中" if living else "未开播")
+    widget_text = (live_info or {}).get("content", "")
+    log.info("[%s] %s 直播状态: %s%s", now, nickname,
+             "直播中" if living else "未开播",
+             f" ({widget_text})" if widget_text else "")
 
     if living and not was_living:
         title = f"📢 {nickname} 开播啦"
@@ -357,12 +377,13 @@ def run_once(cfg):
 def main():
     cfg = load_config()
     interval = int(cfg.get("check_interval_seconds", 600))
+    debug = "--debug" in sys.argv
 
-    # --once: 单次检测模式(GitHub Actions 等定时触发器使用)
+    # --once: 单次检测模式
     if "--once" in sys.argv:
         log.info("单次检测模式")
         try:
-            run_once(cfg)
+            run_once(cfg, debug=debug)
         except Exception as e:
             import traceback
             log.error("检测异常: %s", e)
@@ -371,7 +392,7 @@ def main():
         return
 
     # 默认: 本地长驻循环模式
-    log.info("小红书开播检测已启动")
+    log.info("小红书开播检测已启动(本地长驻模式)")
     log.info("监控主页: %s", cfg["xhs_user_url"])
     log.info("检测间隔: %d 秒", interval)
     while True:
