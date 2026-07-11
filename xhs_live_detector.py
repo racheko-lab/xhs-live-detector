@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-小红书开播检测工具 - 多主播版
+小红书开播检测工具 - 多主播版 v2
 
 监控多个小红书用户主页的直播状态,在「开播 / 下播」状态变化时通过 Bark 推送到手机。
+
+改进:
+- 正确跟随短链重定向,保留xsec_token等所有参数
+- 多路径检测直播状态(liveStream/widget/文本关键词)
+- 改进请求头,支持移动端检测
 """
 
 import json
@@ -13,6 +18,7 @@ import sys
 import time
 import logging
 from datetime import datetime
+from urllib.parse import urljoin
 
 
 CONFIG_FILE = "config.json"
@@ -24,7 +30,7 @@ DEFAULT_CONFIG = {
     "check_interval_seconds": 600,
     "remind_interval_seconds": 3600,
     "state_file": "state.json",
-    "request_timeout": 15,
+    "request_timeout": 20,
     "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
 }
 
@@ -72,7 +78,6 @@ def load_config():
             except ValueError:
                 pass
         merged[cfg_key] = val
-    # 兼容旧版单主播配置
     single_url = merged.get("xhs_user_url") or os.environ.get("XHS_USER_URL")
     if single_url and not merged.get("xhs_users"):
         merged["xhs_users"] = [{"name": "主播", "url": single_url}]
@@ -107,127 +112,249 @@ def save_state(state_file, state):
 
 # ---------- 抓取 & 解析 ----------
 
-def _get_headers(ua, cookie):
+def _get_headers(ua, cookie, referer="https://www.xiaohongshu.com/"):
     headers = {
         "User-Agent": ua,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "zh-CN,zh-Hans;q=0.9",
-        "Referer": "https://www.xiaohongshu.com/",
+        "Referer": referer,
     }
     if cookie and cookie.isascii():
         headers["Cookie"] = cookie
     return headers
 
 
-def _resolve_short_url(url, headers, timeout):
-    if "xhslink.com" not in url:
-        return url
-    import urllib.request, ssl
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(url, headers=headers)
+def _follow_redirects(start_url, headers, timeout, ctx):
+    """正确跟随所有重定向,返回最终URL和HTML内容"""
+    import urllib.request
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             return None
     opener = urllib.request.build_opener(NoRedirect, urllib.request.HTTPSHandler(context=ctx))
-    try:
-        opener.open(req, timeout=timeout)
-        return url
-    except urllib.error.HTTPError as e:
-        loc = e.headers.get("Location", "")
-        if loc:
-            log.info("短链解析: %s -> %s", url[:40], loc[:80])
-            return loc
-        return url
-    except Exception as e:
-        log.warning("短链解析失败: %s", e)
-        return url
+    current = start_url
+    for _ in range(10):
+        req = urllib.request.Request(current, headers=headers)
+        try:
+            resp = opener.open(req, timeout=timeout)
+            data = resp.read()
+            ctype = resp.headers.get("Content-Type", "")
+            charset = "utf-8"
+            if "charset=" in ctype:
+                charset = ctype.split("charset=")[-1].split(";")[0].strip()
+            return resp.geturl(), data.decode(charset, errors="replace")
+        except urllib.error.HTTPError as e:
+            if e.code in (301, 302, 303, 307, 308):
+                loc = e.headers.get("Location", "")
+                if not loc:
+                    break
+                if loc.startswith("/"):
+                    loc = urljoin(current, loc)
+                current = loc
+                continue
+            raise
+    return current, None
 
 
 def fetch_page(url, cookie, ua, timeout):
-    headers = _get_headers(ua, cookie)
-    final_url = _resolve_short_url(url, headers, timeout)
+    """抓取页面,自动处理短链重定向"""
     import urllib.request, ssl
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(final_url, headers=headers)
+    
+    headers = _get_headers(ua, cookie)
+    if "xhslink.com" in url:
+        log.info("解析短链: %s", url[:50])
+        final_url, html = _follow_redirects(url, headers, timeout, ctx)
+        if html:
+            return final_url, html
+    
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
         data = resp.read()
         ctype = resp.headers.get("Content-Type", "")
         charset = "utf-8"
         if "charset=" in ctype:
             charset = ctype.split("charset=")[-1].split(";")[0].strip()
-        return data.decode(charset, errors="replace")
+        return resp.geturl(), data.decode(charset, errors="replace")
 
 
 def extract_initial_state(html):
-    m = re.search(
+    """从HTML中提取window.__INITIAL_STATE__"""
+    patterns = [
+        r"<script>window\.__INITIAL_STATE__=(.*?)</script>",
         r"window\.__INITIAL_STATE__\s*=\s*(\{.*?\})\s*</script>",
-        html,
-        re.DOTALL,
-    )
-    if not m:
-        m = re.search(
-            r"window\.__INITIAL_STATE__\s*=\s*(\{.*?\})\s*$",
-            html,
-            re.DOTALL | re.MULTILINE,
-        )
-    if not m:
-        return None
-    raw = m.group(1)
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        raw2 = re.sub(r"\bundefined\b", "null", raw)
-        try:
-            return json.loads(raw2)
-        except json.JSONDecodeError:
-            return None
-
-
-def find_live_info(state):
-    if not isinstance(state, dict):
-        return False, None
-    try:
-        widgets = (
-            state.get("profile", {})
-            .get("userInfo", {})
-            .get("userPageWidgetsInfo", {})
-            .get("normalWidgetList", [])
-        )
-        for w in widgets:
-            if w.get("businessType") != "live":
-                continue
-            content_raw = w.get("widgetDataContent", "")
-            if not content_raw:
-                continue
+        r"window\.__INITIAL_STATE__\s*=\s*(\{.*?\})\s*;?\s*$",
+    ]
+    for pat in patterns:
+        m = re.search(pat, html, re.DOTALL | re.MULTILINE)
+        if m:
+            raw = m.group(1)
             try:
-                content_obj = json.loads(content_raw) if isinstance(content_raw, str) else content_raw
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                raw2 = re.sub(r"\bundefined\b", "null", raw)
+                try:
+                    return json.loads(raw2)
+                except json.JSONDecodeError:
+                    continue
+    return None
+
+
+def find_live_info(state, html):
+    """
+    多路径检测直播状态:
+    1. liveStream (直播间页面)
+    2. normalWidgetList (用户主页widget)
+    3. HTML文本关键词
+    返回: (is_live: bool, info: dict|None)
+    """
+    if not state and not html:
+        return False, None
+    
+    info = {}
+    is_live = False
+    live_title = ""
+    
+    # 路径1: 直播间页面的 liveStream
+    if isinstance(state, dict):
+        live_stream = state.get("liveStream")
+        if live_stream and isinstance(live_stream, dict):
+            live_status = live_stream.get("liveStatus")
+            if live_status == "success":
+                room_data = live_stream.get("roomData", {})
+                room_info = room_data.get("roomInfo", {}) if isinstance(room_data, dict) else {}
+                title = room_info.get("roomTitle", "") if isinstance(room_info, dict) else ""
+                if "回放" not in title:
+                    is_live = True
+                    live_title = title or "正在直播"
+                    info["source"] = "liveStream"
+                    info["title"] = live_title
+                    return True, info
+                else:
+                    info["note"] = "直播回放"
+    
+    # 路径2: profile.userInfo.userPageWidgetsInfo.normalWidgetList (移动端)
+    if isinstance(state, dict):
+        try:
+            widgets = (
+                state.get("profile", {})
+                .get("userInfo", {})
+                .get("userPageWidgetsInfo", {})
+                .get("normalWidgetList", [])
+            )
+            if isinstance(widgets, list):
+                for w in widgets:
+                    if not isinstance(w, dict):
+                        continue
+                    if w.get("businessType") != "live":
+                        continue
+                    content_raw = w.get("widgetDataContent", "") or w.get("content", "")
+                    text = w.get("title", "") or ""
+                    if content_raw:
+                        try:
+                            content_obj = json.loads(content_raw) if isinstance(content_raw, str) else content_raw
+                            if isinstance(content_obj, dict):
+                                text = content_obj.get("content", "") or text
+                        except Exception:
+                            text = content_raw[:200]
+                    if "直播中" in text or "正在直播" in text:
+                        is_live = True
+                        live_title = text
+                        info["source"] = "widget-mobile"
+                        info["title"] = live_title
+                        info["content"] = text
+                        return True, info
+                    elif text:
+                        info["widget_text"] = text
+        except Exception:
+            pass
+    
+    # 路径3: user.userPageData (PC端路径兜底)
+    if isinstance(state, dict):
+        try:
+            user_data = state.get("user", {}).get("userPageData", {})
+            if isinstance(user_data, dict):
+                for key in ["result", "extraInfo", "basicInfo", "tabs"]:
+                    val = user_data.get(key)
+                    if isinstance(val, dict):
+                        def search_dict(d, path=""):
+                            nonlocal is_live, live_title
+                            for k, v in d.items():
+                                if isinstance(v, str):
+                                    if "直播中" in v or "正在直播" in v:
+                                        is_live = True
+                                        live_title = v
+                                        return True
+                                elif isinstance(v, dict):
+                                    if search_dict(v, f"{path}.{k}"):
+                                        return True
+                                elif isinstance(v, list):
+                                    for item in v:
+                                        if isinstance(item, dict) and search_dict(item, f"{path}[{k}]"):
+                                            return True
+                            return False
+                        if search_dict(val):
+                            info["source"] = f"user.userPageData.{key}"
+                            info["title"] = live_title
+                            return True, info
+        except Exception:
+            pass
+    
+    # 路径4: HTML文本中搜索直播关键词(兜底)
+    if html:
+        for kw in ["正在直播", "直播中", "进入直播间"]:
+            if kw in html:
+                idx = html.find(kw)
+                context = html[max(0, idx-50):idx+100]
+                if "直播回顾" not in context and "回放" not in context:
+                    is_live = True
+                    info["source"] = "html-keyword"
+                    info["title"] = kw
+                    info["context"] = context
+                    return True, info
+    
+    if not is_live:
+        if info.get("widget_text"):
+            return False, {"content": info["widget_text"]}
+        return False, None
+    return is_live, info
+
+
+def extract_nickname(state, html):
+    """从state或HTML中提取主播昵称"""
+    if isinstance(state, dict):
+        for path in [
+            lambda s: s.get("user", {}).get("userPageData", {}).get("basicInfo", {}).get("nickname"),
+            lambda s: s.get("profile", {}).get("userInfo", {}).get("nickname"),
+            lambda s: s.get("user", {}).get("userInfo", {}).get("nickname"),
+        ]:
+            try:
+                name = path(state)
+                if name and isinstance(name, str) and name != "小红书用户":
+                    return name
             except Exception:
-                content_obj = {}
-            text = content_obj.get("content", "") or w.get("title", "") or ""
-            if "直播中" in text or "正在直播" in text:
-                return True, {"content": text, "title": text}
-            return False, {"content": text}
-        return False, None
-    except Exception:
-        return False, None
+                continue
+    if html:
+        m = re.search(r"<title>@?(.*?)(\s*[-|]\s*小红书)?</title>", html)
+        if m:
+            title = m.group(1).strip()
+            if title and "小红书" not in title and len(title) < 50:
+                return title.replace("的个人主页", "").strip()
+    return "小红书用户"
 
 
-def extract_nickname(state):
-    try:
-        user = state.get("user", {})
-        ui = user.get("userPageData", {}).get("userInfo", {}) or user.get("userInfo", {})
-        if ui.get("nickname"):
-            return ui["nickname"]
-        pui = state.get("profile", {}).get("userInfo", {})
-        if pui.get("nickname"):
-            return pui["nickname"]
-        return "小红书用户"
-    except Exception:
-        return "小红书用户"
+def extract_user_id(url):
+    """从URL中提取小红书用户ID"""
+    if not url:
+        return url
+    m = re.search(r"/user/profile/([a-f0-9]+)", url)
+    if m:
+        return m.group(1)
+    m = re.search(r"xiaohongshu\.com/user/([a-f0-9]+)", url)
+    if m:
+        return m.group(1)
+    return url
 
 
 # ---------- Bark 推送 ----------
@@ -261,21 +388,32 @@ def send_bark(bark_server, bark_key, title, body, group="小红书开播"):
 def check_user(user_cfg, cookie, ua, timeout, debug=False):
     url = user_cfg["url"]
     custom_name = user_cfg.get("name", "")
-    html = fetch_page(url, cookie, ua, timeout)
+    final_url, html = fetch_page(url, cookie, ua, timeout)
     state = extract_initial_state(html)
     nickname = custom_name or "小红书用户"
     living = False
     live_info = None
     widget_text = ""
+    
     if state:
-        page_nickname = extract_nickname(state)
+        page_nickname = extract_nickname(state, html)
         if page_nickname and page_nickname != "小红书用户":
             nickname = custom_name or page_nickname
-        living, live_info = find_live_info(state)
-        widget_text = (live_info or {}).get("content", "")
+        living, live_info = find_live_info(state, html)
+        widget_text = (live_info or {}).get("title", "") or (live_info or {}).get("content", "") or (live_info or {}).get("widget_text", "")
     else:
+        if html:
+            page_nickname = extract_nickname(None, html)
+            if page_nickname and page_nickname != "小红书用户":
+                nickname = custom_name or page_nickname
+            living, live_info = find_live_info(None, html)
+            widget_text = (live_info or {}).get("title", "")
         log.warning("[%s] 未解析到 __INITIAL_STATE__", custom_name or url[:40])
-    return living, nickname, widget_text
+    
+    if debug and live_info:
+        log.info("[%s] 检测来源: %s", nickname, live_info.get("source", "unknown"))
+    
+    return living, nickname, widget_text, final_url
 
 
 def run_once(cfg, debug=False):
@@ -283,7 +421,7 @@ def run_once(cfg, debug=False):
     state_file = cfg.get("state_file", "state.json")
     cookie = cfg.get("xhs_cookie", "")
     ua = cfg.get("user_agent")
-    timeout = cfg.get("request_timeout", 15)
+    timeout = cfg.get("request_timeout", 20)
     users = cfg.get("xhs_users", [])
     state = load_state(state_file)
     if "users" not in state:
@@ -292,16 +430,16 @@ def run_once(cfg, debug=False):
     any_change = False
     for user_cfg in users:
         url = user_cfg["url"]
-        user_id = user_cfg.get("id") or url
-        user_state = state["users"].get(user_id, {"living": False, "last_notify_time": 0})
         try:
-            living, nickname, widget_text = check_user(user_cfg, cookie, ua, timeout, debug)
+            living, nickname, widget_text, final_url = check_user(user_cfg, cookie, ua, timeout, debug)
         except Exception as e:
             log.error("[%s] 检测异常: %s", user_cfg.get("name", url[:30]), e)
             import traceback
             if debug:
                 log.error(traceback.format_exc())
             continue
+        user_id = user_cfg.get("id") or extract_user_id(final_url) or extract_user_id(url) or url
+        user_state = state["users"].get(user_id, {"living": False, "last_notify_time": 0})
         was_living = user_state.get("living", False)
         last_notify = user_state.get("last_notify_time", 0)
         log.info("[%s] %s: %s%s", now_str, nickname,
@@ -309,7 +447,7 @@ def run_once(cfg, debug=False):
                  f" ({widget_text})" if widget_text else "")
         if living and not was_living:
             title = f"📢 {nickname} 开播啦"
-            body = f"{nickname} 正在小红书直播\n时间: {now_str}\n主页: {url}"
+            body = f"{nickname} 正在小红书直播\n时间: {now_str}\n主页: {final_url or url}"
             send_bark(cfg["bark_server"], cfg["bark_key"], title, body)
             user_state["last_notify_time"] = time.time()
             any_change = True
@@ -327,8 +465,10 @@ def run_once(cfg, debug=False):
         user_state["is_live"] = living
         user_state["living"] = living
         user_state["name"] = nickname
+        user_state["nickname"] = nickname
         user_state["note"] = widget_text if widget_text else ("正在直播" if living else "监控中")
         user_state["last_check"] = now_str
+        user_state["url"] = final_url or url
         state["users"][user_id] = user_state
         time.sleep(2)
     state["last_check"] = now_str
