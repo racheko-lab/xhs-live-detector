@@ -24,7 +24,6 @@ import time
 import logging
 from datetime import datetime
 
-import requests
 
 CONFIG_FILE = "config.json"
 DEFAULT_CONFIG = {
@@ -274,17 +273,17 @@ def send_bark(bark_server, bark_key, title, body, group="小红书开播"):
         "icon": "https://www.xiaohongshu.com/favicon.ico",
     }
     try:
-        resp = requests.post(url, json=payload, timeout=15)
-        if resp.status_code == 200:
-            data = resp.json()
+        import urllib.request
+        req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
             if data.get("code") == 200:
                 log.info("Bark 推送成功: %s", title)
                 return True
             log.warning("Bark 返回异常: %s", data)
-        else:
-            log.warning("Bark 推送失败 HTTP %s: %s", resp.status_code, resp.text[:200])
     except Exception as e:
-        log.warning("Bark 推送异常: %s", e)
+        log.warning("Bark 推送失败: %s", e)
     return False
 
 
