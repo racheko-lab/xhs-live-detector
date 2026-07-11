@@ -275,6 +275,16 @@ def check_once(cfg):
 
     html = fetch_page(url, cookie, ua, timeout)
     state = extract_initial_state(html)
+    # 调试:输出关键信息定位问题
+    log.info("抓取HTML长度: %d", len(html))
+    log.info("含__INITIAL_STATE__: %s", "window.__INITIAL_STATE__" in html)
+    log.info("含liveStream字段: %s", "liveStream" in html)
+    log.info("含liveStatus字段: %s", "liveStatus" in html)
+    log.info("HTML前300字符: %s", html[:300])
+    if "liveStream" in html:
+        idx = html.find("liveStream")
+        log.info("liveStream附近内容: %s", html[idx:idx+500])
+
     nickname = "小红书用户"
     living = False
     live_info = None
@@ -284,6 +294,7 @@ def check_once(cfg):
         living, live_info = find_live_info(state)
         if living and live_info and live_info.get("anchor"):
             nickname = live_info["anchor"]
+        log.info("state顶层keys: %s", list(state.keys()) if isinstance(state, dict) else "非dict")
 
     return living, nickname, live_info
 
